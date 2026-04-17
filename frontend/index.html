@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bengali Dataset Generator</title>
+  <meta name="description" content="Automated instruction-response dataset creation from URLs, PDFs, and scanned images.">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ── HEADER ── -->
+  <header>
+    <div class="logo">
+      <span class="logo-icon">বা</span>
+      <div>
+        <span class="logo-title">Fine-Tune Ready Bengali Dataset Generator</span>
+        <span class="logo-sub">Automated Instruction-Response Pipeline</span>
+      </div>
+    </div>
+    <div id="ws-status" class="ws-badge idle">● Idle</div>
+  </header>
+
+  <main>
+
+    <!-- ── PANEL 1: INPUT ── -->
+    <section class="panel" id="input-panel">
+      <h2 class="panel-title"><span class="step-num">1</span>Add Your Source</h2>
+
+      <div class="tabs" role="tablist">
+        <button class="tab active" id="tab-url"  role="tab" aria-selected="true"  onclick="switchTab('url')">🌐 Website URL</button>
+        <button class="tab"        id="tab-file" role="tab" aria-selected="false" onclick="switchTab('file')">📄 PDF / Image</button>
+      </div>
+
+      <!-- URL input -->
+      <div class="tab-content" id="tab-content-url">
+        <div class="input-group">
+          <label for="url-input">Paste a URL</label>
+          <div class="url-row">
+            <input type="url" id="url-input" placeholder="https://example.com/bengali-article" autocomplete="off" />
+            <button type="button" class="btn-primary" id="btn-url" onclick="submitUrl()">
+              <span class="btn-text">Generate</span><span class="btn-icon">→</span>
+            </button>
+          </div>
+          <p class="hint">Extracts only the content of the provided page.</p>
+        </div>
+      </div>
+
+      <!-- File input -->
+      <div class="tab-content hidden" id="tab-content-file">
+        <div class="dropzone" id="dropzone"
+          ondragover="event.preventDefault(); this.classList.add('drag-over')"
+          ondragleave="this.classList.remove('drag-over')"
+          ondrop="handleDrop(event)">
+          <div class="dropzone-icon">⬆</div>
+          <p class="dropzone-label">Drag & drop PDF or image here</p>
+          <p class="dropzone-sub">or</p>
+          <label class="btn-secondary" for="file-input">Browse files</label>
+          <input type="file" id="file-input" accept=".pdf,.png,.jpg,.jpeg" hidden onchange="handleFileSelect(event)" />
+          <p class="hint">Supported formats: PDF (text-layer), PNG, JPG</p>
+        </div>
+        <div id="file-selected" class="file-selected hidden">
+          <span id="file-name-label">—</span>
+          <button type="button" class="btn-primary" id="btn-file" onclick="submitFile()">
+            <span class="btn-text">Generate</span><span class="btn-icon">→</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── PANEL 2: PIPELINE STATUS ── -->
+    <section class="panel" id="status-panel">
+      <h2 class="panel-title"><span class="step-num">2</span>Live Pipeline</h2>
+
+      <div class="pipeline-steps">
+
+        <div class="pipe-step" id="ps-input">
+          <div class="pipe-dot"></div>
+          <div class="pipe-info">
+            <span class="pipe-name">Input Router</span>
+            <span class="pipe-desc">Routing input to the correct node</span>
+          </div>
+          <span class="pipe-state">—</span>
+        </div>
+        <div class="pipe-connector"></div>
+
+        <div class="pipe-step" id="ps-extract">
+          <div class="pipe-dot"></div>
+          <div class="pipe-info">
+            <span class="pipe-name" id="ps-extract-name">Extraction</span>
+            <span class="pipe-desc">Scrape · PDF · OCR</span>
+          </div>
+          <span class="pipe-state">—</span>
+        </div>
+        <div class="pipe-connector"></div>
+
+        <div class="pipe-step" id="ps-clean">
+          <div class="pipe-dot"></div>
+          <div class="pipe-info">
+            <span class="pipe-name">LLM-Ready Cleaning</span>
+            <span class="pipe-desc">Html2TextTransformer → noise removal</span>
+          </div>
+          <span class="pipe-state">—</span>
+        </div>
+        <div class="pipe-connector"></div>
+
+        <div class="pipe-step" id="ps-openai">
+          <div class="pipe-dot"></div>
+          <div class="pipe-info">
+            <span class="pipe-name">AI Text Generation</span>
+            <span class="pipe-desc">Structured instruction/response pairs</span>
+          </div>
+          <span class="pipe-state">—</span>
+        </div>
+        <div class="pipe-connector"></div>
+
+        <div class="pipe-step" id="ps-output">
+          <div class="pipe-dot"></div>
+          <div class="pipe-info">
+            <span class="pipe-name">Export</span>
+            <span class="pipe-desc">JSONL · HuggingFace · Unsloth · Excel</span>
+          </div>
+          <span class="pipe-state">—</span>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ── PANEL 3: RESULT ── -->
+    <section class="panel hidden" id="result-panel">
+      <h2 class="panel-title"><span class="step-num">3</span>Result</h2>
+
+      <!-- Error state -->
+      <div id="result-error" class="result-box error-box hidden">
+        <span class="box-icon">✗</span>
+        <div>
+          <strong>Pipeline Error</strong>
+          <p id="error-message"></p>
+        </div>
+      </div>
+
+      <!-- Success state -->
+      <div id="result-success" class="hidden">
+        <div class="result-stats">
+          <div class="stat-card accent">
+            <span class="stat-num" id="stat-pairs">0</span>
+            <span class="stat-label">Instruction / Response pairs</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-num">4</span>
+            <span class="stat-label">Export formats ready</span>
+          </div>
+        </div>
+
+        <p class="download-label">Download your dataset</p>
+        <div class="download-grid">
+
+          <button type="button" id="btn-dl-jsonl" class="btn-dl" onclick="downloadDataset('jsonl')">
+            <span class="dl-icon">{ }</span>
+            <div>
+              <span class="dl-name">Base JSONL</span>
+              <span class="dl-sub">instruction / response</span>
+            </div>
+          </button>
+
+          <button type="button" id="btn-dl-hf" class="btn-dl" onclick="downloadDataset('hf')">
+            <span class="dl-icon">🤗</span>
+            <div>
+              <span class="dl-name">HuggingFace</span>
+              <span class="dl-sub">messages format</span>
+            </div>
+          </button>
+
+          <button type="button" id="btn-dl-unsloth" class="btn-dl" onclick="downloadDataset('unsloth')">
+            <span class="dl-icon">⚡</span>
+            <div>
+              <span class="dl-name">Unsloth</span>
+              <span class="dl-sub">Alpaca format</span>
+            </div>
+          </button>
+
+          <button type="button" id="btn-dl-excel" class="btn-dl" onclick="downloadDataset('excel')">
+            <span class="dl-icon">📊</span>
+            <div>
+              <span class="dl-name">Excel</span>
+              <span class="dl-sub">.xlsx spreadsheet</span>
+            </div>
+          </button>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <p>Automated Instruction Dataset Generation Pipeline</p>
+    <p style="margin-top: 0.4rem; font-size: 0.70rem; opacity: 0.8;">&copy; 2026 DataGen Pro. All Rights Reserved.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
