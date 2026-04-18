@@ -173,12 +173,13 @@ def openai_node(state: GraphState) -> GraphState:
     full_text = "\n\n".join(texts)
 
     sys_prompt = state.get("system_prompt") or config.SYSTEM_PROMPT
-    hum_prompt = state.get("human_prompt") or config.HUMAN_PROMPT_TEMPLATE
+    hum_prompt = state.get("human_prompt")  or config.HUMAN_PROMPT_TEMPLATE
+    llm_model  = state.get("model")         or config.LLM_MODEL
     
     # Secretly append the context placeholder to whatever the user wrote
     hum_prompt = hum_prompt.strip() + "\n\nContext:\n{context}"
 
-    llm    = ChatOpenAI(model=config.LLM_MODEL, reasoning_effort=config.REASONING_EFFORT)
+    llm    = ChatOpenAI(model=llm_model, reasoning_effort=config.REASONING_EFFORT)
     prompt = ChatPromptTemplate.from_messages([
         ("system", sys_prompt),
         ("human",  hum_prompt),

@@ -23,9 +23,11 @@ let ws            = null;
 let isRunning     = false;  // prevents double-submits and stuck UI
 
 // ── Default Prompts (Mirror of backend) ──────────────────────────────────
+const DEFAULT_MODEL         = "gpt-5.4-mini";
 const DEFAULT_SYSTEM_PROMPT = "You are an expert curriculum designer and AI dataset creator specialising in the Bengali language. Your task is to extract high-quality, diverse instruction-response pairs STRICTLY in the Bengali language from the provided document context. Create pairs that are suitable for fine-tuning a Qwen 2.5 3B model on Bengali understanding and generation. The pairs must be fluent, culturally appropriate, factually accurate, and logically derived from the text.";
 const DEFAULT_HUMAN_PROMPT = "Carefully analyse the following document and understand its core themes, key facts, and overall domain.\n\nBased firmly on this text, generate instruction-response pairs in Bengali that offer balanced and comprehensive coverage of the material. Your absolute priority is QUALITY over quantity — avoid trivial or repetitive pairs. Instructions must be naturally phrased and varied (questions, tasks, fill-in, explanations, etc.). Responses must be highly accurate, fluent in Bengali, and sufficiently detailed to train a premium model.";
 
+let customModel        = DEFAULT_MODEL;
 let customSystemPrompt = DEFAULT_SYSTEM_PROMPT;
 let customHumanPrompt  = DEFAULT_HUMAN_PROMPT;
 
@@ -174,7 +176,8 @@ function connectAndRun(inputType, inputSource) {
       input_type:   inputType,
       input_source: inputSource,
       system_prompt: customSystemPrompt,
-      human_prompt:  customHumanPrompt
+      human_prompt:  customHumanPrompt,
+      model:         customModel
     }));
   };
 
@@ -237,6 +240,7 @@ function handleWsMessage(msg) {
 // ── Submit handlers ────────────────────────────────────────────────────────
 
 function submitUrl() {
+  if (isRunning) return;
   const url = document.getElementById('url-input').value.trim();
   if (!url) { showToast('Please enter a URL.', 'error'); return; }
   try { new URL(url); } catch { showToast('Invalid URL — include https://', 'error'); return; }
@@ -244,8 +248,11 @@ function submitUrl() {
 }
 
 async function submitFile() {
+  if (isRunning) return;
   if (!selectedFile) { showToast('No file selected.', 'error'); return; }
 
+  // Lock UI during upload phase
+  isRunning = true;
   setInputsDisabled(true);
   setWsBadge('connecting', 'Uploading…');
 
@@ -257,15 +264,18 @@ async function submitFile() {
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       showToast(err.detail || 'Upload failed.', 'error');
-      setInputsDisabled(false);
+      _unlockUI();
       setWsBadge('idle', 'Idle');
       return;
     }
     const { file_path, input_type } = await res.json();
+    
+    // Unlock momentarily so connectAndRun can re-lock natively
+    isRunning = false; 
     connectAndRun(input_type, file_path);
   } catch {
     showToast('Upload failed — backend unreachable.', 'error');
-    setInputsDisabled(false);
+    _unlockUI();
     setWsBadge('idle', 'Idle');
   }
 }
@@ -386,6 +396,7 @@ document.getElementById('url-input').addEventListener('keydown', e => {
 // ── Settings Modal Handlers ────────────────────────────────────────────────
 
 function openSettings() {
+  document.getElementById('model-select').value  = customModel;
   document.getElementById('prompt-system').value = customSystemPrompt;
   document.getElementById('prompt-human').value  = customHumanPrompt;
   document.getElementById('settings-modal').classList.add('active');
@@ -396,19 +407,22 @@ function closeSettings() {
 }
 
 function resetPromptsToDefault() {
+  document.getElementById('model-select').value  = DEFAULT_MODEL;
   document.getElementById('prompt-system').value = DEFAULT_SYSTEM_PROMPT;
   document.getElementById('prompt-human').value  = DEFAULT_HUMAN_PROMPT;
 }
 
 function saveSettings() {
+  const modObj = document.getElementById('model-select').value;
   const sysObj = document.getElementById('prompt-system').value.trim();
   const humObj = document.getElementById('prompt-human').value.trim();
 
+  customModel        = modObj || DEFAULT_MODEL;
   customSystemPrompt = sysObj || DEFAULT_SYSTEM_PROMPT;
   customHumanPrompt  = humObj || DEFAULT_HUMAN_PROMPT;
   
   closeSettings();
-  showToast("Prompt settings saved!", "success");
+  showToast("Settings saved!", "success");
 }
 
 // Close settings when clicking on the overlay shadow

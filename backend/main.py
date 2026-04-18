@@ -28,12 +28,13 @@ os.makedirs(config.OUTPUTS_DIR, exist_ok=True)
 class UrlRequest(BaseModel):
     url: str
 
-def _initial_state(input_type: str, input_source: str, sys=None, hum=None) -> GraphState:
+def _initial_state(input_type: str, input_source: str, sys=None, hum=None, model=None) -> GraphState:
     return {
         "input_type":    input_type,
         "input_source":  input_source,
         "system_prompt": sys,
         "human_prompt":  hum,
+        "model":         model,
         "raw_documents": [],
         "cleaned_texts": [],
         "qa_pairs":      [],
@@ -104,6 +105,7 @@ async def ws_process(websocket: WebSocket):
         input_source = data.get("input_source")
         sys_prompt   = data.get("system_prompt")
         hum_prompt   = data.get("human_prompt")
+        custom_model = data.get("model")
 
         if not input_type or not input_source:
             await websocket.send_json({"type": "error", "message": "Missing input_type or input_source."})
@@ -117,7 +119,7 @@ async def ws_process(websocket: WebSocket):
             await websocket.send_json({"type": "error", "message": "OPENAI_API_KEY is not configured in .env"})
             return
 
-        state = _initial_state(input_type, input_source, sys=sys_prompt, hum=hum_prompt)
+        state = _initial_state(input_type, input_source, sys=sys_prompt, hum=hum_prompt, model=custom_model)
         accumulated: dict = {}
         fatal_error = False
 

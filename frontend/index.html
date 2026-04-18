@@ -218,6 +218,14 @@
         <button type="button" class="modal-close" onclick="closeSettings()">&times;</button>
       </div>
       <div class="modal-body">
+        <label for="model-select">Selected AI Model</label>
+        <select id="model-select" style="width: 100%; padding: 0.75rem; background: var(--bg-card2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); outline: none; margin-bottom: 1.2rem; font-family: inherit; font-size: 0.85rem; appearance: none; cursor: pointer;">
+          <option value="gpt-5.4-mini">gpt-5.4-mini (Default)</option>
+          <option value="gpt-5.4">gpt-5.4</option>
+          <option value="gpt-5.4-nano">gpt-5.4-nano</option>
+          <option value="o4-mini-2025-04-16">o4-mini-2025-04-16</option>
+        </select>
+
         <label for="prompt-system">AI Expert Persona (System Identity)</label>
         <textarea id="prompt-system"></textarea>
 

@@ -35,7 +35,7 @@ class Config:
     TESSERACT_LANG: str = None   # Resolved lazily below after class definition
 
     # ── LLM settings ──────────────────────────────────────────────────────
-    LLM_MODEL       = "gpt-5.4"
+    LLM_MODEL       = "gpt-5.4-mini"
     # LLM_TEMPERATURE = 0.2
     REASONING_EFFORT= "low"
 

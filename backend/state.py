@@ -6,6 +6,7 @@ class GraphState(TypedDict):
     input_source:  str                              # URL string or local file path
     system_prompt: Optional[str]                    # Custom system prompt for generation
     human_prompt:  Optional[str]                    # Custom human prompt template
+    model:         Optional[str]                    # Custom LLM model Selection
     raw_documents: List[str]                        # Raw text extracted from source
     cleaned_texts: List[str]                        # After LLM-ready preprocessing
     qa_pairs:      Annotated[List[Dict[str, str]], operator.add]  # Instruction/response pairs
