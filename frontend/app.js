@@ -47,6 +47,13 @@ function switchTab(tab) {
   document.getElementById(`tab-${tab}`).classList.add('active');
   document.getElementById(`tab-${tab}`).setAttribute('aria-selected', 'true');
   document.getElementById(`tab-content-${tab}`).classList.remove('hidden');
+
+  // Clear previous pipeline results to prevent confusion
+  if (!document.getElementById('btn-url').disabled) {
+    resetPipeline();
+    hideResult();
+    setWsBadge('idle', 'Idle');
+  }
 }
 
 
@@ -73,6 +80,11 @@ function setFile(file) {
   selectedFile = file;
   document.getElementById('file-name-label').textContent = file.name;
   document.getElementById('file-selected').classList.remove('hidden');
+
+  // Clear old pipeline state whenever a new file is uploaded
+  resetPipeline();
+  hideResult();
+  setWsBadge('idle', 'Ready');
 }
 
 
@@ -88,6 +100,14 @@ function resetPipeline() {
   // Reset extract label to generic
   const nameEl = document.getElementById('ps-extract-name');
   if (nameEl) nameEl.textContent = 'Extraction';
+  
+  // Safety: Forcefully re-enable inputs when the pipeline is manually reset
+  setInputsDisabled(false);
+  
+  // If there's an active hanging websocket from a previous incomplete job, kill it
+  if (ws && ws.readyState < 2) {
+    ws.close();
+  }
 }
 
 function setStep(stepId, state /* 'active'|'done'|'error' */, label = null) {
@@ -116,9 +136,6 @@ function setWsBadge(state /* 'idle'|'connecting'|'running'|'done'|'error' */, te
 // ── WebSocket pipeline runner ──────────────────────────────────────────────
 
 function connectAndRun(inputType, inputSource) {
-  // Close any existing connection
-  if (ws && ws.readyState < 2) ws.close();
-
   resetPipeline();
   hideResult();
   setInputsDisabled(true);

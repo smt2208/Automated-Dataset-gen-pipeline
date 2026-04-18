@@ -22,8 +22,9 @@ class Config:
     TESSERACT_LANG = "ben"          # Bengali Tesseract language pack
 
     # ── LLM settings ──────────────────────────────────────────────────────
-    LLM_MODEL       = "gpt-5.4-nano"
-    LLM_TEMPERATURE = 0.2
+    LLM_MODEL       = "gpt-5.4"
+    # LLM_TEMPERATURE = 0.2
+    REASONING_EFFORT= "low"
 
     # ── Prompts ───────────────────────────────────────────────────────────
     SYSTEM_PROMPT = (

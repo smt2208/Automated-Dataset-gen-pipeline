@@ -131,7 +131,7 @@ def openai_node(state: GraphState) -> GraphState:
 
     full_text = "\n\n".join(texts)
 
-    llm    = ChatOpenAI(model=config.LLM_MODEL, temperature=config.LLM_TEMPERATURE)
+    llm    = ChatOpenAI(model=config.LLM_MODEL, reasoning_effort=config.REASONING_EFFORT)
     prompt = ChatPromptTemplate.from_messages([
         ("system", config.SYSTEM_PROMPT),
         ("human",  config.HUMAN_PROMPT_TEMPLATE),

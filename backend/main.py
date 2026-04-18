@@ -164,12 +164,16 @@ async def ws_process(websocket: WebSocket):
             "pairs": len(accumulated.get("qa_pairs", [])),
             "files": _file_basenames(accumulated),
         })
+        
+        # Explicitly close so the client UI unlocks immediately
+        await websocket.close()
 
     except WebSocketDisconnect:
         pass  # client closed the connection cleanly
     except Exception as e:
         try:
             await websocket.send_json({"type": "error", "message": str(e)})
+            await websocket.close()
         except Exception:
             pass
 
