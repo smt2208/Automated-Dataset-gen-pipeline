@@ -21,7 +21,10 @@
         <span class="logo-sub">Automated Instruction-Response Pipeline</span>
       </div>
     </div>
-    <div id="ws-status" class="ws-badge idle">● Idle</div>
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <button type="button" class="btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" onclick="openSettings()">⚙ Settings</button>
+      <div id="ws-status" class="ws-badge idle">● Idle</div>
+    </div>
   </header>
 
   <main>
@@ -56,11 +59,11 @@
           ondragleave="this.classList.remove('drag-over')"
           ondrop="handleDrop(event)">
           <div class="dropzone-icon">⬆</div>
-          <p class="dropzone-label">Drag & drop PDF or image here</p>
+          <p class="dropzone-label">Drag & drop PDF, image, or text file here</p>
           <p class="dropzone-sub">or</p>
           <label class="btn-secondary" for="file-input">Browse files</label>
-          <input type="file" id="file-input" accept=".pdf,.png,.jpg,.jpeg" hidden onchange="handleFileSelect(event)" />
-          <p class="hint">Supported formats: PDF (text-layer), PNG, JPG</p>
+          <input type="file" id="file-input" accept=".pdf,.png,.jpg,.jpeg,.txt" hidden onchange="handleFileSelect(event)" />
+          <p class="hint">Supported formats: PDF, PNG, JPG, TXT</p>
         </div>
         <div id="file-selected" class="file-selected hidden">
           <span id="file-name-label">—</span>
@@ -80,8 +83,8 @@
         <div class="pipe-step" id="ps-input">
           <div class="pipe-dot"></div>
           <div class="pipe-info">
-            <span class="pipe-name">Input Router</span>
-            <span class="pipe-desc">Routing input to the correct node</span>
+            <span class="pipe-name">Preparing Source</span>
+            <span class="pipe-desc">Connecting to the selected file or URL</span>
           </div>
           <span class="pipe-state">—</span>
         </div>
@@ -90,8 +93,8 @@
         <div class="pipe-step" id="ps-extract">
           <div class="pipe-dot"></div>
           <div class="pipe-info">
-            <span class="pipe-name" id="ps-extract-name">Extraction</span>
-            <span class="pipe-desc">Scrape · PDF · OCR</span>
+            <span class="pipe-name" id="ps-extract-name">Reading Content</span>
+            <span class="pipe-desc">Extracting text from the provided source</span>
           </div>
           <span class="pipe-state">—</span>
         </div>
@@ -100,8 +103,8 @@
         <div class="pipe-step" id="ps-clean">
           <div class="pipe-dot"></div>
           <div class="pipe-info">
-            <span class="pipe-name">LLM-Ready Cleaning</span>
-            <span class="pipe-desc">Html2TextTransformer → noise removal</span>
+            <span class="pipe-name">Cleaning Data</span>
+            <span class="pipe-desc">Removing noise and standardizing format</span>
           </div>
           <span class="pipe-state">—</span>
         </div>
@@ -110,8 +113,8 @@
         <div class="pipe-step" id="ps-openai">
           <div class="pipe-dot"></div>
           <div class="pipe-info">
-            <span class="pipe-name">AI Text Generation</span>
-            <span class="pipe-desc">Structured instruction/response pairs</span>
+            <span class="pipe-name">Generating Dataset</span>
+            <span class="pipe-desc">Crafting high-quality question & answer pairs</span>
           </div>
           <span class="pipe-state">—</span>
         </div>
@@ -120,8 +123,8 @@
         <div class="pipe-step" id="ps-output">
           <div class="pipe-dot"></div>
           <div class="pipe-info">
-            <span class="pipe-name">Export</span>
-            <span class="pipe-desc">JSONL · HuggingFace · Unsloth · Excel</span>
+            <span class="pipe-name">Finalising Files</span>
+            <span class="pipe-desc">Preparing your dataset formats for download</span>
           </div>
           <span class="pipe-state">—</span>
         </div>
@@ -161,35 +164,41 @@
           <button type="button" id="btn-dl-jsonl" class="btn-dl" onclick="downloadDataset('jsonl')">
             <span class="dl-icon">{ }</span>
             <div>
-              <span class="dl-name">Base JSONL</span>
-              <span class="dl-sub">instruction / response</span>
+              <span class="dl-name">Raw Pairs (JSONL)</span>
+              <span class="dl-sub">standard instruction / response</span>
             </div>
           </button>
 
           <button type="button" id="btn-dl-hf" class="btn-dl" onclick="downloadDataset('hf')">
             <span class="dl-icon">🤗</span>
             <div>
-              <span class="dl-name">HuggingFace</span>
-              <span class="dl-sub">messages format</span>
+              <span class="dl-name">HuggingFace Format</span>
+              <span class="dl-sub">chat messages compatible</span>
             </div>
           </button>
 
           <button type="button" id="btn-dl-unsloth" class="btn-dl" onclick="downloadDataset('unsloth')">
             <span class="dl-icon">⚡</span>
             <div>
-              <span class="dl-name">Unsloth</span>
-              <span class="dl-sub">Alpaca format</span>
+              <span class="dl-name">Alpaca Format</span>
+              <span class="dl-sub">ready for unsloth fine-tuning</span>
             </div>
           </button>
 
           <button type="button" id="btn-dl-excel" class="btn-dl" onclick="downloadDataset('excel')">
             <span class="dl-icon">📊</span>
             <div>
-              <span class="dl-name">Excel</span>
-              <span class="dl-sub">.xlsx spreadsheet</span>
+              <span class="dl-name">Excel Spreadsheet</span>
+              <span class="dl-sub">easy to view and edit</span>
             </div>
           </button>
 
+        </div>
+
+        <div style="margin-top: 1.5rem; text-align: center;">
+          <button type="button" class="btn-secondary" onclick="resetForNewGeneration()" style="padding: 0.6rem 1.6rem; font-size: 0.9rem;">
+            ↺ Generate Another
+          </button>
         </div>
       </div>
     </section>
@@ -200,6 +209,27 @@
     <p>Automated Instruction Dataset Generation Pipeline</p>
     <p style="margin-top: 0.4rem; font-size: 0.70rem; opacity: 0.8;">&copy; 2026 DataGen Pro. All Rights Reserved.</p>
   </footer>
+
+  <!-- ── SETTINGS MODAL ── -->
+  <div id="settings-modal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Fine-Tune AI Behavior</h3>
+        <button type="button" class="modal-close" onclick="closeSettings()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <label for="prompt-system">AI Expert Persona (System Identity)</label>
+        <textarea id="prompt-system"></textarea>
+
+        <label for="prompt-human">Extraction Instructions (Generation Rules)</label>
+        <textarea id="prompt-human"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="resetPromptsToDefault()">Reset Defaults</button>
+        <button type="button" class="btn-primary" onclick="saveSettings()">Save Configuration</button>
+      </div>
+    </div>
+  </div>
 
   <script src="app.js"></script>
 </body>

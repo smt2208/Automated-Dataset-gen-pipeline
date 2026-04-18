@@ -15,11 +15,24 @@ class Config:
 
     # ── Apify crawler settings ────────────────────────────────────────────
     APIFY_ACTOR_ID   = "apify/website-content-crawler"
-    APIFY_CRAWL_PAGES = 1   # Only crawl the single URL the user provides
-    APIFY_CRAWL_DEPTH = 0   # Do NOT follow embedded / linked pages
+    APIFY_CRAWL_PAGES = 5   #crawl the 9 more url's inside the page
+    APIFY_CRAWL_DEPTH = 1   # follow embedded
 
     # ── OCR settings ──────────────────────────────────────────────────────
-    TESSERACT_LANG = "ben"          # Bengali Tesseract language pack
+    # Use bengali+english if ben pack is installed, otherwise fall back to eng.
+    # This makes OCR work on any language content without crashing.
+    @staticmethod
+    def _best_tesseract_lang() -> str:
+        try:
+            import pytesseract
+            available = pytesseract.get_languages(config='')
+            if 'ben' in available:
+                return 'ben+eng'
+            return 'eng'
+        except Exception:
+            return 'eng'
+
+    TESSERACT_LANG: str = None   # Resolved lazily below after class definition
 
     # ── LLM settings ──────────────────────────────────────────────────────
     LLM_MODEL       = "gpt-5.4"
@@ -40,8 +53,7 @@ class Config:
         "coverage of the material. "
         "Your absolute priority is QUALITY over quantity — avoid trivial or repetitive pairs. "
         "Instructions must be naturally phrased and varied (questions, tasks, fill-in, explanations, etc.). "
-        "Responses must be highly accurate, fluent in Bengali, and sufficiently detailed to train a premium model.\n\n"
-        "Context:\n{context}"
+        "Responses must be highly accurate, fluent in Bengali, and sufficiently detailed to train a premium model."
     )
 
     # ── Node labels shown on the frontend pipeline ────────────────────────
@@ -49,6 +61,7 @@ class Config:
         "scrape_node":  "Extracting Content from Website",
         "pdf_node":     "Parsing PDF Text",
         "ocr_node":     "Optical Character Recognition (OCR)",
+        "text_node":    "Reading Text File",
         "clean_node":   "Data Preprocessing & Formatting",
         "openai_node":  "Generating High-Quality Instruction Pairs",
         "output_node":  "Exporting Formatted Datasets",
@@ -56,3 +69,4 @@ class Config:
     KNOWN_NODES: set = set(NODE_LABELS.keys())
 
 config = Config()
+config.TESSERACT_LANG = Config._best_tesseract_lang()

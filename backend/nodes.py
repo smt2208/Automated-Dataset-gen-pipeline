@@ -3,6 +3,7 @@ import re
 import json
 import uuid
 import pytesseract
+import fitz  # PyMuPDF — already a dependency
 
 try:
     from PIL import Image
@@ -15,9 +16,8 @@ try:
 except ImportError:
     EXCEL_AVAILABLE = False
 
-from langchain_community.document_loaders import PyMuPDFLoader
-from langchain_community.document_transformers import Html2TextTransformer
 from langchain_core.documents import Document
+from langchain_community.document_transformers import Html2TextTransformer
 from langchain_apify import ApifyWrapper
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
@@ -64,28 +64,69 @@ def scrape_node(state: GraphState) -> GraphState:
         return {"errors": [f"Scraping failed: {str(e)}"]}
 
 
+# ── OCR helper — retries with 'eng' if the primary language pack is missing ──
+
+def _safe_ocr(image, lang: str) -> str:
+    """Run Tesseract OCR with graceful fallback to 'eng' if lang pack is missing."""
+    try:
+        return pytesseract.image_to_string(image, lang=lang)
+    except pytesseract.TesseractError:
+        # Language pack not installed — fall back to English-only OCR
+        return pytesseract.image_to_string(image, lang='eng')
+
+
+
 def pdf_node(state: GraphState) -> GraphState:
-    """Extract text from a text-layer PDF using PyMuPDF."""
+    """Extract text from a PDF.
+    - If the PDF has a text layer → use PyMuPDF directly.
+    - If the page is blank (scanned/image-only) → auto-fall back to Tesseract OCR.
+    """
     file_path = state["input_source"]
     try:
-        loader = PyMuPDFLoader(file_path)
-        docs = loader.load()
-        raw_text = [doc.page_content for doc in docs if doc.page_content.strip()]
+        doc = fitz.open(file_path)
+        raw_text = []
+        for page in doc:
+            text = page.get_text().strip()
+            if text:
+                raw_text.append(text)
+            else:
+                # Page is an image — render and OCR it
+                pix = page.get_pixmap(dpi=200)
+                img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+                ocr_text = _safe_ocr(img, config.TESSERACT_LANG).strip()
+                if ocr_text:
+                    raw_text.append(ocr_text)
+        if not raw_text:
+            return {"errors": ["PDF had no extractable text and OCR returned nothing."]}
         return {"raw_documents": raw_text}
     except Exception as e:
         return {"errors": [f"PDF extraction failed: {str(e)}"]}
 
 
+def text_node(state: GraphState) -> GraphState:
+    """Read a plain .txt file directly."""
+    file_path = state["input_source"]
+    try:
+        with open(file_path, "r", encoding="utf-8", errors="replace") as f:
+            content = f.read().strip()
+        if not content:
+            return {"errors": ["Text file is empty."]}
+        return {"raw_documents": [content]}
+    except Exception as e:
+        return {"errors": [f"Text file reading failed: {str(e)}"]}
+
+
 def ocr_node(state: GraphState) -> GraphState:
-    """Extract text from a scanned image using Tesseract OCR with Bengali pack."""
+    """Extract text from a scanned image using Tesseract OCR (multilingual with auto-fallback)."""
     file_path = state["input_source"]
     try:
         image = Image.open(file_path)
-        text = pytesseract.image_to_string(image, lang=config.TESSERACT_LANG)
+        text = _safe_ocr(image, config.TESSERACT_LANG).strip()
+        if not text:
+            return {"errors": ["OCR returned no text from this image."]}
         return {"raw_documents": [text]}
     except Exception as e:
         return {"errors": [f"OCR failed: {str(e)}"]}
-
 
 # ── LLM-ready preprocessing (LangChain document transformer) ─────────────────
 
@@ -131,10 +172,16 @@ def openai_node(state: GraphState) -> GraphState:
 
     full_text = "\n\n".join(texts)
 
+    sys_prompt = state.get("system_prompt") or config.SYSTEM_PROMPT
+    hum_prompt = state.get("human_prompt") or config.HUMAN_PROMPT_TEMPLATE
+    
+    # Secretly append the context placeholder to whatever the user wrote
+    hum_prompt = hum_prompt.strip() + "\n\nContext:\n{context}"
+
     llm    = ChatOpenAI(model=config.LLM_MODEL, reasoning_effort=config.REASONING_EFFORT)
     prompt = ChatPromptTemplate.from_messages([
-        ("system", config.SYSTEM_PROMPT),
-        ("human",  config.HUMAN_PROMPT_TEMPLATE),
+        ("system", sys_prompt),
+        ("human",  hum_prompt),
     ])
     chain = prompt | llm.with_structured_output(QAPairsList)
 

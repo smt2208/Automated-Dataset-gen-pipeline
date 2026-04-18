@@ -28,10 +28,12 @@ os.makedirs(config.OUTPUTS_DIR, exist_ok=True)
 class UrlRequest(BaseModel):
     url: str
 
-def _initial_state(input_type: str, input_source: str) -> GraphState:
+def _initial_state(input_type: str, input_source: str, sys=None, hum=None) -> GraphState:
     return {
-        "input_type":   input_type,
-        "input_source": input_source,
+        "input_type":    input_type,
+        "input_source":  input_source,
+        "system_prompt": sys,
+        "human_prompt":  hum,
         "raw_documents": [],
         "cleaned_texts": [],
         "qa_pairs":      [],
@@ -64,10 +66,12 @@ async def upload_file(file: UploadFile = File(...)):
         input_type = "pdf"
     elif ext in (".png", ".jpg", ".jpeg"):
         input_type = "image"
+    elif ext == ".txt":
+        input_type = "text"
     else:
         raise HTTPException(
             status_code=400,
-            detail="Unsupported format. Upload a PDF or image (PNG/JPG)."
+            detail="Unsupported format. Upload a PDF, image (PNG/JPG), or text (.txt) file."
         )
     file_path = os.path.join(config.UPLOADS_DIR, file.filename)
     with open(file_path, "wb") as f:
@@ -98,6 +102,8 @@ async def ws_process(websocket: WebSocket):
         data = await websocket.receive_json()
         input_type   = data.get("input_type")
         input_source = data.get("input_source")
+        sys_prompt   = data.get("system_prompt")
+        hum_prompt   = data.get("human_prompt")
 
         if not input_type or not input_source:
             await websocket.send_json({"type": "error", "message": "Missing input_type or input_source."})
@@ -111,7 +117,7 @@ async def ws_process(websocket: WebSocket):
             await websocket.send_json({"type": "error", "message": "OPENAI_API_KEY is not configured in .env"})
             return
 
-        state = _initial_state(input_type, input_source)
+        state = _initial_state(input_type, input_source, sys=sys_prompt, hum=hum_prompt)
         accumulated: dict = {}
         fatal_error = False
 

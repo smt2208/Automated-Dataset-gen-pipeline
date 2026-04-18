@@ -20,6 +20,14 @@ const WS_URL = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.ho
 let selectedFile  = null;
 let downloadFiles = {};   // filled on "completed" event
 let ws            = null;
+let isRunning     = false;  // prevents double-submits and stuck UI
+
+// ── Default Prompts (Mirror of backend) ──────────────────────────────────
+const DEFAULT_SYSTEM_PROMPT = "You are an expert curriculum designer and AI dataset creator specialising in the Bengali language. Your task is to extract high-quality, diverse instruction-response pairs STRICTLY in the Bengali language from the provided document context. Create pairs that are suitable for fine-tuning a Qwen 2.5 3B model on Bengali understanding and generation. The pairs must be fluent, culturally appropriate, factually accurate, and logically derived from the text.";
+const DEFAULT_HUMAN_PROMPT = "Carefully analyse the following document and understand its core themes, key facts, and overall domain.\n\nBased firmly on this text, generate instruction-response pairs in Bengali that offer balanced and comprehensive coverage of the material. Your absolute priority is QUALITY over quantity — avoid trivial or repetitive pairs. Instructions must be naturally phrased and varied (questions, tasks, fill-in, explanations, etc.). Responses must be highly accurate, fluent in Bengali, and sufficiently detailed to train a premium model.";
+
+let customSystemPrompt = DEFAULT_SYSTEM_PROMPT;
+let customHumanPrompt  = DEFAULT_HUMAN_PROMPT;
 
 // Mapping: backend node name → frontend step <div> id
 // Multiple backend nodes map to the same visual step (ps-extract)
@@ -27,6 +35,7 @@ const NODE_STEP = {
   scrape_node:  'ps-extract',
   pdf_node:     'ps-extract',
   ocr_node:     'ps-extract',
+  text_node:    'ps-extract',
   clean_node:   'ps-clean',
   openai_node:  'ps-openai',
   output_node:  'ps-output',
@@ -48,8 +57,8 @@ function switchTab(tab) {
   document.getElementById(`tab-${tab}`).setAttribute('aria-selected', 'true');
   document.getElementById(`tab-content-${tab}`).classList.remove('hidden');
 
-  // Clear previous pipeline results to prevent confusion
-  if (!document.getElementById('btn-url').disabled) {
+  // Only clear results if we are not mid-generation
+  if (!isRunning) {
     resetPipeline();
     hideResult();
     setWsBadge('idle', 'Idle');
@@ -72,19 +81,23 @@ function handleFileSelect(event) {
 }
 
 function setFile(file) {
-  const allowed = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];
-  if (!allowed.includes(file.type)) {
-    showToast('Unsupported type. Use PDF, PNG, or JPG.', 'error');
+  const allowed = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg', 'text/plain'];
+  // Also check by extension since .txt MIME type can vary across browsers
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (!allowed.includes(file.type) && !['pdf','png','jpg','jpeg','txt'].includes(ext)) {
+    showToast('Unsupported type. Use PDF, PNG, JPG, or TXT.', 'error');
     return;
   }
   selectedFile = file;
   document.getElementById('file-name-label').textContent = file.name;
   document.getElementById('file-selected').classList.remove('hidden');
 
-  // Clear old pipeline state whenever a new file is uploaded
-  resetPipeline();
-  hideResult();
-  setWsBadge('idle', 'Ready');
+  // Clear old pipeline state only if not mid-generation
+  if (!isRunning) {
+    resetPipeline();
+    hideResult();
+    setWsBadge('idle', 'Ready');
+  }
 }
 
 
@@ -97,17 +110,9 @@ function resetPipeline() {
     el.className = 'pipe-step';
     el.querySelector('.pipe-state').textContent = '—';
   });
-  // Reset extract label to generic
   const nameEl = document.getElementById('ps-extract-name');
   if (nameEl) nameEl.textContent = 'Extraction';
-  
-  // Safety: Forcefully re-enable inputs when the pipeline is manually reset
-  setInputsDisabled(false);
-  
-  // If there's an active hanging websocket from a previous incomplete job, kill it
-  if (ws && ws.readyState < 2) {
-    ws.close();
-  }
+  // NOTE: do NOT touch `ws` or `isRunning` here — managed by connectAndRun/unlock
 }
 
 function setStep(stepId, state /* 'active'|'done'|'error' */, label = null) {
@@ -135,13 +140,29 @@ function setWsBadge(state /* 'idle'|'connecting'|'running'|'done'|'error' */, te
 
 // ── WebSocket pipeline runner ──────────────────────────────────────────────
 
+function _unlockUI() {
+  isRunning = false;
+  setInputsDisabled(false);
+}
+
+function _closeOldWs() {
+  if (ws) {
+    // Detach handlers first so onclose doesn't fire on the OLD ws and unlock prematurely
+    ws.onopen = ws.onmessage = ws.onerror = ws.onclose = null;
+    if (ws.readyState < 2) ws.close();
+    ws = null;
+  }
+}
+
 function connectAndRun(inputType, inputSource) {
+  if (isRunning) return;   // block double-submits
+  isRunning = true;
+
+  _closeOldWs();
   resetPipeline();
   hideResult();
   setInputsDisabled(true);
   setWsBadge('connecting', 'Connecting…');
-
-  // Immediately mark routing as active
   setStep('ps-input', 'active');
 
   ws = new WebSocket(WS_URL);
@@ -149,25 +170,33 @@ function connectAndRun(inputType, inputSource) {
   ws.onopen = () => {
     setWsBadge('running', 'Running');
     setStep('ps-input', 'done');
-    ws.send(JSON.stringify({ input_type: inputType, input_source: inputSource }));
+    ws.send(JSON.stringify({
+      input_type:   inputType,
+      input_source: inputSource,
+      system_prompt: customSystemPrompt,
+      human_prompt:  customHumanPrompt
+    }));
   };
 
   ws.onmessage = (evt) => {
-    try {
-      handleWsMessage(JSON.parse(evt.data));
-    } catch (e) {
-      console.error('WS parse error', e);
-    }
+    try { handleWsMessage(JSON.parse(evt.data)); }
+    catch (e) { console.error('WS parse error', e); }
   };
 
   ws.onerror = () => {
     setWsBadge('error', 'Error');
-    showError('WebSocket error — is the backend running on port 8000?');
-    setInputsDisabled(false);
+    showError('WebSocket error — is the backend running?');
+    _unlockUI();
   };
 
   ws.onclose = () => {
-    setInputsDisabled(false);
+    // Always unlock whenever the socket closes (success, error, or server-side close)
+    _unlockUI();
+    // If badge is still "Running" it means server closed without sending completed
+    const badge = document.getElementById('ws-status');
+    if (badge && badge.classList.contains('running')) {
+      setWsBadge('idle', 'Idle');
+    }
   };
 }
 
@@ -286,6 +315,27 @@ function hideResult() {
   document.getElementById('result-error').classList.add('hidden');
 }
 
+function resetForNewGeneration() {
+  // Cleanly close any lingering WS without triggering any state handlers
+  _closeOldWs();
+  // Reset UI
+  resetPipeline();
+  hideResult();
+  downloadFiles = {};
+  selectedFile  = null;
+  isRunning     = false;
+  // Clear the file input so the same file can be re-selected
+  const fi = document.getElementById('file-input');
+  if (fi) fi.value = '';
+  document.getElementById('file-selected').classList.add('hidden');
+  document.getElementById('file-name-label').textContent = '—';
+  // Clear URL input
+  document.getElementById('url-input').value = '';
+  setWsBadge('idle', 'Idle');
+  setInputsDisabled(false);
+  showToast('Ready for a new generation!', 'info');
+}
+
 
 // ── Input lock helpers ─────────────────────────────────────────────────────
 
@@ -330,4 +380,38 @@ function showToast(msg, type = 'info') {
 
 document.getElementById('url-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') submitUrl();
+});
+
+
+// ── Settings Modal Handlers ────────────────────────────────────────────────
+
+function openSettings() {
+  document.getElementById('prompt-system').value = customSystemPrompt;
+  document.getElementById('prompt-human').value  = customHumanPrompt;
+  document.getElementById('settings-modal').classList.add('active');
+}
+
+function closeSettings() {
+  document.getElementById('settings-modal').classList.remove('active');
+}
+
+function resetPromptsToDefault() {
+  document.getElementById('prompt-system').value = DEFAULT_SYSTEM_PROMPT;
+  document.getElementById('prompt-human').value  = DEFAULT_HUMAN_PROMPT;
+}
+
+function saveSettings() {
+  const sysObj = document.getElementById('prompt-system').value.trim();
+  const humObj = document.getElementById('prompt-human').value.trim();
+
+  customSystemPrompt = sysObj || DEFAULT_SYSTEM_PROMPT;
+  customHumanPrompt  = humObj || DEFAULT_HUMAN_PROMPT;
+  
+  closeSettings();
+  showToast("Prompt settings saved!", "success");
+}
+
+// Close settings when clicking on the overlay shadow
+document.getElementById('settings-modal').addEventListener('click', e => {
+  if (e.target.id === 'settings-modal') closeSettings();
 });
