@@ -1,71 +1,213 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Bengali AI Tutor — Dataset Generator</title>
-  <meta name="description" content="Automated Bengali dataset generation pipeline for CPT, SFT, and DPO fine-tuning of LLM's.">
+  <title>AI Powered Bengali Dataset Generator</title>
+  <meta name="description"
+    content="Automated Bengali dataset generation pipeline for CPT, SFT, and DPO fine-tuning of Qwen 2.5 3B via LoRA.">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+Bengali:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
 
-  <!-- ── HEADER ── -->
-  <header>
-    <div class="logo">
-      <span class="logo-icon">বাং</span>
-      <div>
-        <span class="logo-title">Bengali AI Tutor — Dataset Generator</span>
-      </div>
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- PERSISTENT NAVBAR                                          -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <nav id="main-nav">
+    <div class="nav-left">
+      <a href="#home" class="nav-logo">
+        <span class="nav-logo-icon">বাং</span>
+        <span class="nav-logo-text">Bengali AI Dataset</span>
+      </a>
     </div>
-    <div style="display:flex;align-items:center;gap:1rem;">
+    <div class="nav-links">
+      <a href="#home" class="nav-link active" data-page="home">
+        <span class="nav-link-icon">🏠</span> Home
+      </a>
+      <a href="#cpt" class="nav-link nav-link-cpt" data-page="cpt">
+        <span class="nav-link-dot cpt-dot"></span> CPT
+      </a>
+      <a href="#sft" class="nav-link nav-link-sft" data-page="sft">
+        <span class="nav-link-dot sft-dot"></span> SFT
+      </a>
+      <a href="#dpo" class="nav-link nav-link-dpo" data-page="dpo">
+        <span class="nav-link-dot dpo-dot"></span> DPO
+      </a>
+    </div>
+    <div class="nav-right">
       <div id="ws-status" class="ws-badge idle">● Idle</div>
     </div>
-  </header>
+  </nav>
 
-  <!-- ── PIPELINE STEPPER ── -->
-  <div class="pipeline-stepper">
-    <div class="stepper-step active" id="stepper-cpt">
-      <div class="stepper-circle">1</div>
-      <div class="stepper-info">
-        <span class="stepper-label">CPT</span>
-        <span class="stepper-sub">Pre-training</span>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- PAGE: HOME / LANDING                                       -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <div id="page-home" class="page active">
+
+    <!-- Hero -->
+    <section class="hero">
+      <div class="hero-glow"></div>
+      <div class="hero-content">
+        <h1 class="hero-title">
+          AI-Powered Bengali<br>
+          <span class="hero-gradient">Fine-Tuning Dataset Generator</span>
+        </h1>
+        <p class="hero-desc">
+          Generate high-quality, tailored Bengali language datasets for custom LLM fine-tuning.
+          Produce specialized corpora for Continued Pre-Training (CPT), Supervised Fine-Tuning (SFT),
+          and Direct Preference Optimization (DPO) independently based on your target tasks.
+        </p>
+        <div class="hero-cta">
+          <a href="#cpt" class="btn-hero btn-hero-cpt">
+            <span class="btn-hero-num">CPT</span>
+            Pre-Training Data
+            <span class="btn-hero-arrow">→</span>
+          </a>
+          <a href="#sft" class="btn-hero btn-hero-sft">
+            <span class="btn-hero-num">SFT</span>
+            Supervised Data
+            <span class="btn-hero-arrow">→</span>
+          </a>
+          <a href="#dpo" class="btn-hero btn-hero-dpo">
+            <span class="btn-hero-num">DPO</span>
+            Preference Data
+            <span class="btn-hero-arrow">→</span>
+          </a>
+        </div>
       </div>
-    </div>
-    <div class="stepper-line"></div>
-    <div class="stepper-step" id="stepper-sft">
-      <div class="stepper-circle">2</div>
-      <div class="stepper-info">
-        <span class="stepper-label">SFT</span>
-        <span class="stepper-sub">Instruction Tuning</span>
+    </section>
+
+    <!-- Dataset Generation Options -->
+    <section class="home-section">
+      <h2 class="home-section-title">Independent Generation Modes</h2>
+      <p class="home-section-desc">Choose the specific type of dataset you need for your target fine-tuning strategy</p>
+
+      <div class="pipeline-cards">
+        <!-- CPT Card -->
+        <div class="pipeline-card card-cpt">
+          <div class="pipeline-card-header">
+            <span class="pipeline-card-badge cpt-badge">Pre-Training</span>
+            <span class="pipeline-card-icon">📚</span>
+          </div>
+          <h3 class="pipeline-card-title">Continued Pre-Training</h3>
+          <p class="pipeline-card-desc">
+            Generate raw Bengali text corpora chunks to adapt pre-trained language models to Bengali domain-specific vocabulary, syntax, grammar, and specialized context.
+          </p>
+          <div class="pipeline-card-tags">
+            <span class="tag">Next-token prediction</span>
+            <span class="tag">Raw text</span>
+            <span class="tag">Language exposure</span>
+          </div>
+          <a href="#cpt" class="pipeline-card-link">Generate CPT Data →</a>
+        </div>
+
+        <!-- SFT Card -->
+        <div class="pipeline-card card-sft">
+          <div class="pipeline-card-header">
+            <span class="pipeline-card-badge sft-badge">Supervised</span>
+            <span class="pipeline-card-icon">🎓</span>
+          </div>
+          <h3 class="pipeline-card-title">Supervised Fine-Tuning</h3>
+          <p class="pipeline-card-desc">
+            Create high-quality, instruction-input-output pairs to train models on following instructions, answering questions, and executing tasks in Bengali.
+          </p>
+          <div class="pipeline-card-tags">
+            <span class="tag">Instruction tuning</span>
+            <span class="tag">CoT reasoning</span>
+            <span class="tag">Alpaca format</span>
+          </div>
+          <a href="#sft" class="pipeline-card-link">Generate SFT Data →</a>
+        </div>
+
+        <!-- DPO Card -->
+        <div class="pipeline-card card-dpo">
+          <div class="pipeline-card-header">
+            <span class="pipeline-card-badge dpo-badge">Preference</span>
+            <span class="pipeline-card-icon">⚖️</span>
+          </div>
+          <h3 class="pipeline-card-title">Direct Preference Optimization</h3>
+          <p class="pipeline-card-desc">
+            Construct chosen vs. rejected response pairs in Bengali to align models with specific helpfulness, safety, or stylistic preference criteria.
+          </p>
+          <div class="pipeline-card-tags">
+            <span class="tag">Preference pairs</span>
+            <span class="tag">Human alignment</span>
+            <span class="tag">RLHF alternative</span>
+          </div>
+          <a href="#dpo" class="pipeline-card-link">Generate DPO Data →</a>
+        </div>
       </div>
-    </div>
-    <div class="stepper-line"></div>
-    <div class="stepper-step" id="stepper-dpo">
-      <div class="stepper-circle">3</div>
-      <div class="stepper-info">
-        <span class="stepper-label">DPO</span>
-        <span class="stepper-sub">Human Alignment</span>
+    </section>
+
+    <!-- Features -->
+    <section class="home-section">
+      <h2 class="home-section-title">Key Features</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">📄</div>
+          <h4>PDF & DOCX Upload</h4>
+          <p>Extract text from Bengali textbooks, articles, and documents</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🌐</div>
+          <h4>Web Scraping</h4>
+          <p>Crawl Bengali websites and Wikipedia for authentic content</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🎯</div>
+          <h4>Domain-Specific</h4>
+          <p>Math, Science, Bengali Literature, Social Studies — all covered</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📊</div>
+          <h4>Multiple Formats</h4>
+          <p>Export as JSONL, HuggingFace, Alpaca/Unsloth, or Excel</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">⚡</div>
+          <h4>Real-Time Progress</h4>
+          <p>WebSocket-powered live pipeline tracking for every step</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔧</div>
+          <h4>Customizable Prompts</h4>
+          <p>Full control over system prompts, models, and reasoning effort</p>
+        </div>
       </div>
-    </div>
+    </section>
+
   </div>
 
-  <main>
 
-    <!-- ══════════════════════════════════════════════════ -->
-    <!-- SECTION 1 — CPT DATA GENERATION                   -->
-    <!-- ══════════════════════════════════════════════════ -->
-    <section class="pipeline-section" id="section-cpt">
-      <div class="section-header">
-        <div class="section-badge cpt-badge">CPT</div>
-        <div class="section-title-group">
-          <h2 class="section-title">Continued Pre-Training Dataset</h2>
-          <p class="section-desc">Generate raw Bengali text corpora for next-token prediction training</p>
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- PAGE: CPT                                                  -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <div id="page-cpt" class="page">
+    <div class="page-wrapper">
+
+      <!-- Page Header -->
+      <div class="page-header">
+        <div class="page-header-left">
+          <div class="section-badge cpt-badge">CPT</div>
+          <div>
+            <h1 class="page-title">Continued Pre-Training Dataset</h1>
+            <p class="page-desc">Generate raw Bengali text corpora for next-token prediction training</p>
+          </div>
         </div>
-        <button class="btn-settings" onclick="openSectionSettings('cpt')" id="btn-settings-cpt" title="CPT Settings">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>
+        <button class="btn-settings" onclick="openSectionSettings('cpt')" title="CPT Settings">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14" />
+            <path d="M12 2v2M12 20v2M2 12h2M20 12h2" />
+          </svg>
           Settings
         </button>
       </div>
@@ -85,15 +227,14 @@
 
       <!-- CPT: PDF / DOCX -->
       <div class="sub-content active" id="cpt-content-pdf">
-        <div class="dropzone" id="cpt-dropzone"
-          ondragover="event.preventDefault(); this.classList.add('drag-over')"
-          ondragleave="this.classList.remove('drag-over')"
-          ondrop="handleDrop(event,'cpt')">
+        <div class="dropzone" id="cpt-dropzone" ondragover="event.preventDefault(); this.classList.add('drag-over')"
+          ondragleave="this.classList.remove('drag-over')" ondrop="handleDrop(event,'cpt')">
           <div class="dropzone-icon">📤</div>
           <p class="dropzone-label">Drag & drop PDF or DOCX files here</p>
           <p class="dropzone-sub">Bengali textbooks, articles, literature — any Bengali content</p>
           <label class="btn-secondary" for="cpt-file-input">Browse files</label>
-          <input type="file" id="cpt-file-input" accept=".pdf,.docx,.doc,.txt" hidden onchange="handleFileSelect(event,'cpt')"/>
+          <input type="file" id="cpt-file-input" accept=".pdf,.docx,.doc,.txt" hidden
+            onchange="handleFileSelect(event,'cpt')" />
           <p class="hint">Supported: PDF, DOCX, DOC, TXT</p>
         </div>
         <div id="cpt-file-selected" class="file-selected hidden">
@@ -110,7 +251,7 @@
         <div class="input-group">
           <label for="cpt-url-input">Bengali Website URL</label>
           <div class="url-row">
-            <input type="url" id="cpt-url-input" placeholder="https://bn.wikipedia.org/wiki/..." autocomplete="off"/>
+            <input type="url" id="cpt-url-input" placeholder="https://bn.wikipedia.org/wiki/..." autocomplete="off" />
             <button type="button" class="btn-generate" id="btn-cpt-scrape" onclick="submitGeneration('cpt','scrape')">
               <span class="btn-text">Scrape & Generate</span>
               <span class="btn-arrow">→</span>
@@ -124,100 +265,142 @@
       <div class="sub-content" id="cpt-content-domain">
         <p class="sub-hint">Select a domain to generate CPT-style raw text corpus in Bengali</p>
         <div class="domain-grid">
-          <!-- Mathematics -->
           <div class="domain-card" data-domain="math" onclick="selectDomain('cpt', 'math')">
-            <div class="domain-header">
-              <span class="domain-emoji">📐</span>
-              <span class="domain-name">Mathematics</span>
-            </div>
+            <div class="domain-header"><span class="domain-emoji">📐</span><span class="domain-name">Mathematics</span></div>
             <div class="domain-topics">
-              <span class="topic-tag">Arithmetic (Class 1-12)</span>
-              <span class="topic-tag">Algebra</span>
-              <span class="topic-tag">Geometry</span>
-              <span class="topic-tag">Statistics</span>
+              <span class="topic-tag">Arithmetic (Class 1-12)</span><span class="topic-tag">Algebra</span>
+              <span class="topic-tag">Geometry</span><span class="topic-tag">Statistics</span>
               <span class="topic-tag">Word Problems (Tk/₹)</span>
             </div>
           </div>
-          <!-- Science -->
           <div class="domain-card" data-domain="science" onclick="selectDomain('cpt', 'science')">
-            <div class="domain-header">
-              <span class="domain-emoji">🔬</span>
-              <span class="domain-name">Science</span>
-            </div>
+            <div class="domain-header"><span class="domain-emoji">🔬</span><span class="domain-name">Science</span></div>
             <div class="domain-topics">
-              <span class="topic-tag">Physics</span>
-              <span class="topic-tag">Chemistry</span>
-              <span class="topic-tag">Biology</span>
-              <span class="topic-tag">Periodic Table</span>
+              <span class="topic-tag">Physics</span><span class="topic-tag">Chemistry</span>
+              <span class="topic-tag">Biology</span><span class="topic-tag">Periodic Table</span>
               <span class="topic-tag">Ecosystems</span>
             </div>
           </div>
-          <!-- Bengali Language -->
           <div class="domain-card" data-domain="bengali_lang" onclick="selectDomain('cpt', 'bengali_lang')">
-            <div class="domain-header">
-              <span class="domain-emoji">📖</span>
-              <span class="domain-name">Bengali Language & Literature</span>
-            </div>
+            <div class="domain-header"><span class="domain-emoji">📖</span><span class="domain-name">Bengali Language & Literature</span></div>
             <div class="domain-topics">
-              <span class="topic-tag">ব্যাকরণ (Grammar)</span>
-              <span class="topic-tag">সন্ধি · সমাস</span>
-              <span class="topic-tag">Comprehension</span>
-              <span class="topic-tag">Tagore · Nazrul</span>
+              <span class="topic-tag">ব্যাকরণ (Grammar)</span><span class="topic-tag">সন্ধি · সমাস</span>
+              <span class="topic-tag">Comprehension</span><span class="topic-tag">Tagore · Nazrul</span>
               <span class="topic-tag">রচনা Writing</span>
             </div>
           </div>
-          <!-- Social Studies -->
           <div class="domain-card" data-domain="social" onclick="selectDomain('cpt', 'social')">
-            <div class="domain-header">
-              <span class="domain-emoji">🌍</span>
-              <span class="domain-name">Social Studies / Geography</span>
-            </div>
+            <div class="domain-header"><span class="domain-emoji">🌍</span><span class="domain-name">Social Studies / Geography</span></div>
             <div class="domain-topics">
-              <span class="topic-tag">West Bengal Geography</span>
-              <span class="topic-tag">Bengali History</span>
-              <span class="topic-tag">Indian History</span>
-              <span class="topic-tag">World History</span>
+              <span class="topic-tag">West Bengal Geography</span><span class="topic-tag">Bengali History</span>
+              <span class="topic-tag">Indian History</span><span class="topic-tag">World History</span>
               <span class="topic-tag">Civics</span>
             </div>
           </div>
         </div>
-
-        <!-- Sub-domain detail panel -->
         <div id="cpt-domain-detail" class="domain-detail hidden">
           <div class="domain-detail-header">
             <span id="cpt-domain-title" class="domain-detail-title">—</span>
             <button class="btn-clear-domain" onclick="clearDomain('cpt')">✕ Change</button>
           </div>
           <div id="cpt-subdomain-list" class="subdomain-list"></div>
-          <button type="button" class="btn-generate" id="btn-cpt-domain" onclick="submitGeneration('cpt','domain')" style="margin-top:1rem;">
+          <button type="button" class="btn-generate" id="btn-cpt-domain" onclick="submitGeneration('cpt','domain')"
+            style="margin-top:1rem;">
             <span class="btn-text">Generate CPT Data</span>
             <span class="btn-arrow">→</span>
           </button>
         </div>
       </div>
 
-      <!-- CPT Result -->
-      <div id="cpt-result" class="section-result hidden"></div>
-    </section>
-
-    <!-- ══════════════════════════════════════════════════ -->
-    <!-- SECTION 2 — SFT DATA GENERATION                   -->
-    <!-- ══════════════════════════════════════════════════ -->
-    <section class="pipeline-section" id="section-sft">
-      <div class="section-header">
-        <div class="section-badge sft-badge">SFT</div>
-        <div class="section-title-group">
-          <h2 class="section-title">Supervised Fine-Tuning Dataset</h2>
-          <p class="section-desc">Generate instruction-response pairs for Bengali tutor behavior</p>
+      <!-- CPT Pipeline Tracker -->
+      <div class="pipeline-tracker hidden" id="cpt-pipeline">
+        <h3 class="tracker-title"><span class="tracker-icon">⚡</span> Live Pipeline — <span class="tracker-mode">CPT Pre-Training</span></h3>
+        <div class="pipeline-steps">
+          <div class="pipe-step" id="cpt-ps-input">
+            <div class="pipe-dot"></div>
+            <div class="pipe-info"><span class="pipe-name">Preparing Source</span><span class="pipe-desc">Connecting to file or URL</span></div>
+            <span class="pipe-state">—</span>
+          </div>
+          <div class="pipe-connector"></div>
+          <div class="pipe-step" id="cpt-ps-extract">
+            <div class="pipe-dot"></div>
+            <div class="pipe-info"><span class="pipe-name" id="cpt-ps-extract-name">Reading Content</span><span class="pipe-desc">Extracting Bengali text</span></div>
+            <span class="pipe-state">—</span>
+          </div>
+          <div class="pipe-connector"></div>
+          <div class="pipe-step" id="cpt-ps-clean">
+            <div class="pipe-dot"></div>
+            <div class="pipe-info"><span class="pipe-name">Cleaning Data</span><span class="pipe-desc">Removing noise, standardizing</span></div>
+            <span class="pipe-state">—</span>
+          </div>
+          <div class="pipe-connector"></div>
+          <div class="pipe-step" id="cpt-ps-openai">
+            <div class="pipe-dot"></div>
+            <div class="pipe-info"><span class="pipe-name">AI Generation</span><span class="pipe-desc">Generating Bengali text chunks</span></div>
+            <span class="pipe-state">—</span>
+          </div>
+          <div class="pipe-connector"></div>
+          <div class="pipe-step" id="cpt-ps-output">
+            <div class="pipe-dot"></div>
+            <div class="pipe-info"><span class="pipe-name">Finalising Files</span><span class="pipe-desc">Preparing export formats</span></div>
+            <span class="pipe-state">—</span>
+          </div>
         </div>
-        <button class="btn-settings" onclick="openSectionSettings('sft')" id="btn-settings-sft" title="SFT Settings">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>
+      </div>
+
+      <!-- CPT Result -->
+      <div id="cpt-result-panel" class="result-panel hidden">
+        <div id="cpt-result-error" class="result-box error-box hidden">
+          <span class="box-icon">✗</span>
+          <div><strong>Pipeline Error</strong><p id="cpt-error-message"></p></div>
+        </div>
+        <div id="cpt-result-success" class="hidden">
+          <div class="result-stats">
+            <div class="stat-card accent"><span class="stat-num" id="cpt-stat-pairs">0</span><span class="stat-label" id="cpt-stat-label">Raw text chunks (CPT)</span></div>
+            <div class="stat-card"><span class="stat-num">4</span><span class="stat-label">Export formats ready</span></div>
+          </div>
+          <p class="download-label">Download your dataset</p>
+          <div class="download-grid">
+            <button type="button" id="cpt-btn-dl-jsonl" class="btn-dl" onclick="downloadDataset('jsonl')"><span class="dl-icon">{ }</span><div><span class="dl-name">Raw JSONL</span><span class="dl-sub">standard text chunks</span></div></button>
+            <button type="button" id="cpt-btn-dl-hf" class="btn-dl" onclick="downloadDataset('hf')"><span class="dl-icon">🤗</span><div><span class="dl-name">HuggingFace Format</span><span class="dl-sub">chat messages compatible</span></div></button>
+            <button type="button" id="cpt-btn-dl-unsloth" class="btn-dl" onclick="downloadDataset('unsloth')"><span class="dl-icon">⚡</span><div><span class="dl-name">Alpaca / Unsloth</span><span class="dl-sub">ready for LoRA fine-tuning</span></div></button>
+            <button type="button" id="cpt-btn-dl-excel" class="btn-dl" onclick="downloadDataset('excel')"><span class="dl-icon">📊</span><div><span class="dl-name">Excel Spreadsheet</span><span class="dl-sub">easy to review and edit</span></div></button>
+          </div>
+          <div style="margin-top:1.5rem;text-align:center;">
+            <button type="button" class="btn-secondary" onclick="resetForNewGeneration()">↺ Generate Another</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- PAGE: SFT                                                  -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <div id="page-sft" class="page">
+    <div class="page-wrapper">
+
+      <div class="page-header">
+        <div class="page-header-left">
+          <div class="section-badge sft-badge">SFT</div>
+          <div>
+            <h1 class="page-title">Supervised Fine-Tuning Dataset</h1>
+            <p class="page-desc">Generate instruction-input-output pairs for high-quality instruction following in Bengali</p>
+          </div>
+        </div>
+        <button class="btn-settings" onclick="openSectionSettings('sft')" title="SFT Settings">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14" />
+            <path d="M12 2v2M12 20v2M2 12h2M20 12h2" />
+          </svg>
           Settings
         </button>
       </div>
 
-      <!-- Sub-tabs -->
-      <div class="sub-tabs" role="tablist">
+      <div class="sub-tabs sft-tabs" role="tablist">
         <button class="sub-tab active" id="sft-tab-pdf" role="tab" onclick="switchSubTab('sft','pdf')">
           <span class="sub-tab-icon">📄</span> PDF / DOCX
         </button>
@@ -231,15 +414,14 @@
 
       <!-- SFT: PDF / DOCX -->
       <div class="sub-content active" id="sft-content-pdf">
-        <div class="dropzone" id="sft-dropzone"
-          ondragover="event.preventDefault(); this.classList.add('drag-over')"
-          ondragleave="this.classList.remove('drag-over')"
-          ondrop="handleDrop(event,'sft')">
+        <div class="dropzone" id="sft-dropzone" ondragover="event.preventDefault(); this.classList.add('drag-over')"
+          ondragleave="this.classList.remove('drag-over')" ondrop="handleDrop(event,'sft')">
           <div class="dropzone-icon">📤</div>
           <p class="dropzone-label">Drag & drop PDF or DOCX files here</p>
           <p class="dropzone-sub">Textbooks, question banks, solved examples for instruction pairs</p>
           <label class="btn-secondary" for="sft-file-input">Browse files</label>
-          <input type="file" id="sft-file-input" accept=".pdf,.docx,.doc,.txt" hidden onchange="handleFileSelect(event,'sft')"/>
+          <input type="file" id="sft-file-input" accept=".pdf,.docx,.doc,.txt" hidden
+            onchange="handleFileSelect(event,'sft')" />
           <p class="hint">Supported: PDF, DOCX, DOC, TXT</p>
         </div>
         <div id="sft-file-selected" class="file-selected hidden">
@@ -256,8 +438,9 @@
         <div class="input-group">
           <label for="sft-url-input">Bengali Educational Website URL</label>
           <div class="url-row">
-            <input type="url" id="sft-url-input" placeholder="https://shikkhok.com/..." autocomplete="off"/>
-            <button type="button" class="btn-generate sft-btn" id="btn-sft-scrape" onclick="submitGeneration('sft','scrape')">
+            <input type="url" id="sft-url-input" placeholder="https://shikkhok.com/..." autocomplete="off" />
+            <button type="button" class="btn-generate sft-btn" id="btn-sft-scrape"
+              onclick="submitGeneration('sft','scrape')">
               <span class="btn-text">Scrape & Generate</span>
               <span class="btn-arrow">→</span>
             </button>
@@ -268,57 +451,37 @@
 
       <!-- SFT: Domain Specific -->
       <div class="sub-content" id="sft-content-domain">
-        <p class="sub-hint">Select a domain to generate SFT instruction-response pairs for the Bengali AI tutor</p>
+        <p class="sub-hint">Select a domain to generate SFT instruction-input-output pairs for the Bengali AI tutor</p>
         <div class="domain-grid">
           <div class="domain-card" data-domain="math" onclick="selectDomain('sft', 'math')">
-            <div class="domain-header">
-              <span class="domain-emoji">📐</span>
-              <span class="domain-name">Mathematics</span>
-            </div>
+            <div class="domain-header"><span class="domain-emoji">📐</span><span class="domain-name">Mathematics</span></div>
             <div class="domain-topics">
-              <span class="topic-tag">Arithmetic (Class 1-12)</span>
-              <span class="topic-tag">Algebra</span>
-              <span class="topic-tag">Geometry</span>
-              <span class="topic-tag">Statistics</span>
+              <span class="topic-tag">Arithmetic (Class 1-12)</span><span class="topic-tag">Algebra</span>
+              <span class="topic-tag">Geometry</span><span class="topic-tag">Statistics</span>
               <span class="topic-tag">Word Problems (Tk/₹)</span>
             </div>
           </div>
           <div class="domain-card" data-domain="science" onclick="selectDomain('sft', 'science')">
-            <div class="domain-header">
-              <span class="domain-emoji">🔬</span>
-              <span class="domain-name">Science</span>
-            </div>
+            <div class="domain-header"><span class="domain-emoji">🔬</span><span class="domain-name">Science</span></div>
             <div class="domain-topics">
-              <span class="topic-tag">Physics</span>
-              <span class="topic-tag">Chemistry</span>
-              <span class="topic-tag">Biology</span>
-              <span class="topic-tag">Periodic Table</span>
+              <span class="topic-tag">Physics</span><span class="topic-tag">Chemistry</span>
+              <span class="topic-tag">Biology</span><span class="topic-tag">Periodic Table</span>
               <span class="topic-tag">Ecosystems</span>
             </div>
           </div>
           <div class="domain-card" data-domain="bengali_lang" onclick="selectDomain('sft', 'bengali_lang')">
-            <div class="domain-header">
-              <span class="domain-emoji">📖</span>
-              <span class="domain-name">Bengali Language & Literature</span>
-            </div>
+            <div class="domain-header"><span class="domain-emoji">📖</span><span class="domain-name">Bengali Language & Literature</span></div>
             <div class="domain-topics">
-              <span class="topic-tag">ব্যাকরণ (Grammar)</span>
-              <span class="topic-tag">সন্ধি · সমাস</span>
-              <span class="topic-tag">Comprehension</span>
-              <span class="topic-tag">Tagore · Nazrul</span>
+              <span class="topic-tag">ব্যাকরণ (Grammar)</span><span class="topic-tag">সন্ধি · সমাস</span>
+              <span class="topic-tag">Comprehension</span><span class="topic-tag">Tagore · Nazrul</span>
               <span class="topic-tag">রচনা Writing</span>
             </div>
           </div>
           <div class="domain-card" data-domain="social" onclick="selectDomain('sft', 'social')">
-            <div class="domain-header">
-              <span class="domain-emoji">🌍</span>
-              <span class="domain-name">Social Studies / Geography</span>
-            </div>
+            <div class="domain-header"><span class="domain-emoji">🌍</span><span class="domain-name">Social Studies / Geography</span></div>
             <div class="domain-topics">
-              <span class="topic-tag">West Bengal Geography</span>
-              <span class="topic-tag">Bengali History</span>
-              <span class="topic-tag">Indian History</span>
-              <span class="topic-tag">World History</span>
+              <span class="topic-tag">West Bengal Geography</span><span class="topic-tag">Bengali History</span>
+              <span class="topic-tag">Indian History</span><span class="topic-tag">World History</span>
               <span class="topic-tag">Civics</span>
             </div>
           </div>
@@ -329,29 +492,98 @@
             <button class="btn-clear-domain" onclick="clearDomain('sft')">✕ Change</button>
           </div>
           <div id="sft-subdomain-list" class="subdomain-list"></div>
-          <button type="button" class="btn-generate sft-btn" id="btn-sft-domain" onclick="submitGeneration('sft','domain')" style="margin-top:1rem;">
+          <button type="button" class="btn-generate sft-btn" id="btn-sft-domain"
+            onclick="submitGeneration('sft','domain')" style="margin-top:1rem;">
             <span class="btn-text">Generate SFT Data</span>
             <span class="btn-arrow">→</span>
           </button>
         </div>
       </div>
 
-      <!-- SFT Result -->
-      <div id="sft-result" class="section-result hidden"></div>
-    </section>
-
-    <!-- ══════════════════════════════════════════════════ -->
-    <!-- SECTION 3 — DPO DATA GENERATION                   -->
-    <!-- ══════════════════════════════════════════════════ -->
-    <section class="pipeline-section" id="section-dpo">
-      <div class="section-header">
-        <div class="section-badge dpo-badge">DPO</div>
-        <div class="section-title-group">
-          <h2 class="section-title">Direct Preference Optimization Dataset</h2>
-          <p class="section-desc">Generate chosen/rejected preference pairs for human alignment</p>
+      <!-- SFT Pipeline Tracker -->
+      <div class="pipeline-tracker hidden" id="sft-pipeline">
+        <h3 class="tracker-title"><span class="tracker-icon">⚡</span> Live Pipeline — <span class="tracker-mode">SFT Instruction Tuning</span></h3>
+        <div class="pipeline-steps">
+          <div class="pipe-step" id="sft-ps-input">
+            <div class="pipe-dot"></div>
+            <div class="pipe-info"><span class="pipe-name">Preparing Source</span><span class="pipe-desc">Connecting to file or URL</span></div>
+            <span class="pipe-state">—</span>
+          </div>
+          <div class="pipe-connector"></div>
+          <div class="pipe-step" id="sft-ps-extract">
+            <div class="pipe-dot"></div>
+            <div class="pipe-info"><span class="pipe-name" id="sft-ps-extract-name">Reading Content</span><span class="pipe-desc">Extracting Bengali text</span></div>
+            <span class="pipe-state">—</span>
+          </div>
+          <div class="pipe-connector"></div>
+          <div class="pipe-step" id="sft-ps-clean">
+            <div class="pipe-dot"></div>
+            <div class="pipe-info"><span class="pipe-name">Cleaning Data</span><span class="pipe-desc">Removing noise, standardizing</span></div>
+            <span class="pipe-state">—</span>
+          </div>
+          <div class="pipe-connector"></div>
+          <div class="pipe-step" id="sft-ps-openai">
+            <div class="pipe-dot"></div>
+            <div class="pipe-info"><span class="pipe-name">AI Generation</span><span class="pipe-desc">Crafting instruction-input-output pairs</span></div>
+            <span class="pipe-state">—</span>
+          </div>
+          <div class="pipe-connector"></div>
+          <div class="pipe-step" id="sft-ps-output">
+            <div class="pipe-dot"></div>
+            <div class="pipe-info"><span class="pipe-name">Finalising Files</span><span class="pipe-desc">Preparing export formats</span></div>
+            <span class="pipe-state">—</span>
+          </div>
         </div>
-        <button class="btn-settings" onclick="openSectionSettings('dpo')" id="btn-settings-dpo" title="DPO Settings">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>
+      </div>
+
+      <!-- SFT Result -->
+      <div id="sft-result-panel" class="result-panel hidden">
+        <div id="sft-result-error" class="result-box error-box hidden">
+          <span class="box-icon">✗</span>
+          <div><strong>Pipeline Error</strong><p id="sft-error-message"></p></div>
+        </div>
+        <div id="sft-result-success" class="hidden">
+          <div class="result-stats">
+            <div class="stat-card accent"><span class="stat-num" id="sft-stat-pairs">0</span><span class="stat-label" id="sft-stat-label">Instruction–input–output pairs (SFT)</span></div>
+            <div class="stat-card"><span class="stat-num">4</span><span class="stat-label">Export formats ready</span></div>
+          </div>
+          <p class="download-label">Download your dataset</p>
+          <div class="download-grid">
+            <button type="button" id="sft-btn-dl-jsonl" class="btn-dl" onclick="downloadDataset('jsonl')"><span class="dl-icon">{ }</span><div><span class="dl-name">Raw JSONL</span><span class="dl-sub">instruction / input / output</span></div></button>
+            <button type="button" id="sft-btn-dl-hf" class="btn-dl" onclick="downloadDataset('hf')"><span class="dl-icon">🤗</span><div><span class="dl-name">HuggingFace Format</span><span class="dl-sub">chat messages compatible</span></div></button>
+            <button type="button" id="sft-btn-dl-unsloth" class="btn-dl" onclick="downloadDataset('unsloth')"><span class="dl-icon">⚡</span><div><span class="dl-name">Alpaca / Unsloth</span><span class="dl-sub">ready for LoRA fine-tuning</span></div></button>
+            <button type="button" id="sft-btn-dl-excel" class="btn-dl" onclick="downloadDataset('excel')"><span class="dl-icon">📊</span><div><span class="dl-name">Excel Spreadsheet</span><span class="dl-sub">easy to review and edit</span></div></button>
+          </div>
+          <div style="margin-top:1.5rem;text-align:center;">
+            <button type="button" class="btn-secondary" onclick="resetForNewGeneration()">↺ Generate Another</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- PAGE: DPO                                                  -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <div id="page-dpo" class="page">
+    <div class="page-wrapper">
+
+      <div class="page-header">
+        <div class="page-header-left">
+          <div class="section-badge dpo-badge">DPO</div>
+          <div>
+            <h1 class="page-title">Direct Preference Optimization Dataset</h1>
+            <p class="page-desc">Generate chosen/rejected preference pairs for human alignment</p>
+          </div>
+        </div>
+        <button class="btn-settings" onclick="openSectionSettings('dpo')" title="DPO Settings">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14" />
+            <path d="M12 2v2M12 20v2M2 12h2M20 12h2" />
+          </svg>
           Settings
         </button>
       </div>
@@ -359,7 +591,8 @@
       <!-- DPO info banner -->
       <div class="info-banner">
         <span class="info-icon">ℹ</span>
-        <span>DPO requires <strong>domain-specific generation only</strong> — the model needs structured context to produce meaningful chosen vs. rejected response pairs for pedagogy alignment.</span>
+        <span>DPO requires <strong>domain-specific generation only</strong> — the model needs structured context to
+          produce meaningful chosen vs. rejected response pairs for preference alignment.</span>
       </div>
 
       <!-- Domain Specific only for DPO -->
@@ -367,54 +600,34 @@
         <p class="sub-hint">Select a domain to generate DPO preference pairs (chosen ✓ vs rejected ✗) in Bengali</p>
         <div class="domain-grid">
           <div class="domain-card" data-domain="math" onclick="selectDomain('dpo', 'math')">
-            <div class="domain-header">
-              <span class="domain-emoji">📐</span>
-              <span class="domain-name">Mathematics</span>
-            </div>
+            <div class="domain-header"><span class="domain-emoji">📐</span><span class="domain-name">Mathematics</span></div>
             <div class="domain-topics">
-              <span class="topic-tag">Arithmetic (Class 1-12)</span>
-              <span class="topic-tag">Algebra</span>
-              <span class="topic-tag">Geometry</span>
-              <span class="topic-tag">Statistics</span>
+              <span class="topic-tag">Arithmetic (Class 1-12)</span><span class="topic-tag">Algebra</span>
+              <span class="topic-tag">Geometry</span><span class="topic-tag">Statistics</span>
               <span class="topic-tag">Word Problems (Tk/₹)</span>
             </div>
           </div>
           <div class="domain-card" data-domain="science" onclick="selectDomain('dpo', 'science')">
-            <div class="domain-header">
-              <span class="domain-emoji">🔬</span>
-              <span class="domain-name">Science</span>
-            </div>
+            <div class="domain-header"><span class="domain-emoji">🔬</span><span class="domain-name">Science</span></div>
             <div class="domain-topics">
-              <span class="topic-tag">Physics</span>
-              <span class="topic-tag">Chemistry</span>
-              <span class="topic-tag">Biology</span>
-              <span class="topic-tag">Periodic Table</span>
+              <span class="topic-tag">Physics</span><span class="topic-tag">Chemistry</span>
+              <span class="topic-tag">Biology</span><span class="topic-tag">Periodic Table</span>
               <span class="topic-tag">Ecosystems</span>
             </div>
           </div>
           <div class="domain-card" data-domain="bengali_lang" onclick="selectDomain('dpo', 'bengali_lang')">
-            <div class="domain-header">
-              <span class="domain-emoji">📖</span>
-              <span class="domain-name">Bengali Language & Literature</span>
-            </div>
+            <div class="domain-header"><span class="domain-emoji">📖</span><span class="domain-name">Bengali Language & Literature</span></div>
             <div class="domain-topics">
-              <span class="topic-tag">ব্যাকরণ (Grammar)</span>
-              <span class="topic-tag">সন্ধি · সমাস</span>
-              <span class="topic-tag">Comprehension</span>
-              <span class="topic-tag">Tagore · Nazrul</span>
+              <span class="topic-tag">ব্যাকরণ (Grammar)</span><span class="topic-tag">সন্ধি · সমাস</span>
+              <span class="topic-tag">Comprehension</span><span class="topic-tag">Tagore · Nazrul</span>
               <span class="topic-tag">রচনা Writing</span>
             </div>
           </div>
           <div class="domain-card" data-domain="social" onclick="selectDomain('dpo', 'social')">
-            <div class="domain-header">
-              <span class="domain-emoji">🌍</span>
-              <span class="domain-name">Social Studies / Geography</span>
-            </div>
+            <div class="domain-header"><span class="domain-emoji">🌍</span><span class="domain-name">Social Studies / Geography</span></div>
             <div class="domain-topics">
-              <span class="topic-tag">West Bengal Geography</span>
-              <span class="topic-tag">Bengali History</span>
-              <span class="topic-tag">Indian History</span>
-              <span class="topic-tag">World History</span>
+              <span class="topic-tag">West Bengal Geography</span><span class="topic-tag">Bengali History</span>
+              <span class="topic-tag">Indian History</span><span class="topic-tag">World History</span>
               <span class="topic-tag">Civics</span>
             </div>
           </div>
@@ -425,111 +638,94 @@
             <button class="btn-clear-domain" onclick="clearDomain('dpo')">✕ Change</button>
           </div>
           <div id="dpo-subdomain-list" class="subdomain-list"></div>
-          <!-- DPO format note -->
           <div class="dpo-format-note">
             <span class="dpo-badge-sm">DPO Format</span>
             Output will include: <code>prompt</code> · <code>chosen</code> · <code>rejected</code> triple pairs
           </div>
-          <button type="button" class="btn-generate dpo-btn" id="btn-dpo-domain" onclick="submitGeneration('dpo','domain')" style="margin-top:1rem;">
+          <button type="button" class="btn-generate dpo-btn" id="btn-dpo-domain"
+            onclick="submitGeneration('dpo','domain')" style="margin-top:1rem;">
             <span class="btn-text">Generate DPO Pairs</span>
             <span class="btn-arrow">→</span>
           </button>
         </div>
       </div>
 
+      <!-- DPO Pipeline Tracker -->
+      <div class="pipeline-tracker hidden" id="dpo-pipeline">
+        <h3 class="tracker-title"><span class="tracker-icon">⚡</span> Live Pipeline — <span class="tracker-mode">DPO Preference Alignment</span></h3>
+        <div class="pipeline-steps">
+          <div class="pipe-step" id="dpo-ps-input">
+            <div class="pipe-dot"></div>
+            <div class="pipe-info"><span class="pipe-name">Preparing Source</span><span class="pipe-desc">Building domain context</span></div>
+            <span class="pipe-state">—</span>
+          </div>
+          <div class="pipe-connector"></div>
+          <div class="pipe-step" id="dpo-ps-extract">
+            <div class="pipe-dot"></div>
+            <div class="pipe-info"><span class="pipe-name" id="dpo-ps-extract-name">Domain Context</span><span class="pipe-desc">Preparing domain knowledge</span></div>
+            <span class="pipe-state">—</span>
+          </div>
+          <div class="pipe-connector"></div>
+          <div class="pipe-step" id="dpo-ps-clean">
+            <div class="pipe-dot"></div>
+            <div class="pipe-info"><span class="pipe-name">Processing</span><span class="pipe-desc">Structuring domain data</span></div>
+            <span class="pipe-state">—</span>
+          </div>
+          <div class="pipe-connector"></div>
+          <div class="pipe-step" id="dpo-ps-openai">
+            <div class="pipe-dot"></div>
+            <div class="pipe-info"><span class="pipe-name">AI Generation</span><span class="pipe-desc">Building chosen vs rejected pairs</span></div>
+            <span class="pipe-state">—</span>
+          </div>
+          <div class="pipe-connector"></div>
+          <div class="pipe-step" id="dpo-ps-output">
+            <div class="pipe-dot"></div>
+            <div class="pipe-info"><span class="pipe-name">Finalising Files</span><span class="pipe-desc">Preparing export formats</span></div>
+            <span class="pipe-state">—</span>
+          </div>
+        </div>
+      </div>
+
       <!-- DPO Result -->
-      <div id="dpo-result" class="section-result hidden"></div>
-    </section>
-
-    <!-- ── LIVE PIPELINE STATUS ── -->
-    <section class="panel" id="status-panel" style="display:none;">
-      <h2 class="panel-title"><span class="step-num">⚡</span> Live Pipeline — <span id="active-pipeline-label">—</span></h2>
-      <div class="pipeline-steps">
-        <div class="pipe-step" id="ps-input">
-          <div class="pipe-dot"></div>
-          <div class="pipe-info"><span class="pipe-name">Preparing Source</span><span class="pipe-desc">Connecting to file or URL</span></div>
-          <span class="pipe-state">—</span>
+      <div id="dpo-result-panel" class="result-panel hidden">
+        <div id="dpo-result-error" class="result-box error-box hidden">
+          <span class="box-icon">✗</span>
+          <div><strong>Pipeline Error</strong><p id="dpo-error-message"></p></div>
         </div>
-        <div class="pipe-connector"></div>
-        <div class="pipe-step" id="ps-extract">
-          <div class="pipe-dot"></div>
-          <div class="pipe-info"><span class="pipe-name" id="ps-extract-name">Reading Content</span><span class="pipe-desc">Extracting Bengali text</span></div>
-          <span class="pipe-state">—</span>
-        </div>
-        <div class="pipe-connector"></div>
-        <div class="pipe-step" id="ps-clean">
-          <div class="pipe-dot"></div>
-          <div class="pipe-info"><span class="pipe-name">Cleaning Data</span><span class="pipe-desc">Removing noise, standardizing</span></div>
-          <span class="pipe-state">—</span>
-        </div>
-        <div class="pipe-connector"></div>
-        <div class="pipe-step" id="ps-openai">
-          <div class="pipe-dot"></div>
-          <div class="pipe-info"><span class="pipe-name">AI Generation</span><span class="pipe-desc">Crafting Bengali dataset pairs</span></div>
-          <span class="pipe-state">—</span>
-        </div>
-        <div class="pipe-connector"></div>
-        <div class="pipe-step" id="ps-output">
-          <div class="pipe-dot"></div>
-          <div class="pipe-info"><span class="pipe-name">Finalising Files</span><span class="pipe-desc">Preparing export formats</span></div>
-          <span class="pipe-state">—</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- ── RESULT PANEL ── -->
-    <section class="panel hidden" id="result-panel">
-      <h2 class="panel-title"><span class="step-num">✓</span> Result</h2>
-      <div id="result-error" class="result-box error-box hidden">
-        <span class="box-icon">✗</span>
-        <div><strong>Pipeline Error</strong><p id="error-message"></p></div>
-      </div>
-      <div id="result-success" class="hidden">
-        <div class="result-stats">
-          <div class="stat-card accent">
-            <span class="stat-num" id="stat-pairs">0</span>
-            <span class="stat-label" id="stat-pairs-label">Dataset pairs generated</span>
+        <div id="dpo-result-success" class="hidden">
+          <div class="result-stats">
+            <div class="stat-card accent"><span class="stat-num" id="dpo-stat-pairs">0</span><span class="stat-label" id="dpo-stat-label">Preference triples (DPO)</span></div>
+            <div class="stat-card"><span class="stat-num">4</span><span class="stat-label">Export formats ready</span></div>
           </div>
-          <div class="stat-card">
-            <span class="stat-num">4</span>
-            <span class="stat-label">Export formats ready</span>
+          <p class="download-label">Download your dataset</p>
+          <div class="download-grid">
+            <button type="button" id="dpo-btn-dl-jsonl" class="btn-dl" onclick="downloadDataset('jsonl')"><span class="dl-icon">{ }</span><div><span class="dl-name">Raw JSONL</span><span class="dl-sub">prompt / chosen / rejected</span></div></button>
+            <button type="button" id="dpo-btn-dl-hf" class="btn-dl" onclick="downloadDataset('hf')"><span class="dl-icon">🤗</span><div><span class="dl-name">HuggingFace Format</span><span class="dl-sub">preference compatible</span></div></button>
+            <button type="button" id="dpo-btn-dl-unsloth" class="btn-dl" onclick="downloadDataset('unsloth')"><span class="dl-icon">⚡</span><div><span class="dl-name">Alpaca / Unsloth</span><span class="dl-sub">DPO training ready</span></div></button>
+            <button type="button" id="dpo-btn-dl-excel" class="btn-dl" onclick="downloadDataset('excel')"><span class="dl-icon">📊</span><div><span class="dl-name">Excel Spreadsheet</span><span class="dl-sub">easy to review and edit</span></div></button>
+          </div>
+          <div style="margin-top:1.5rem;text-align:center;">
+            <button type="button" class="btn-secondary" onclick="resetForNewGeneration()">↺ Generate Another</button>
           </div>
         </div>
-        <p class="download-label">Download your dataset</p>
-        <div class="download-grid">
-          <button type="button" id="btn-dl-jsonl" class="btn-dl" onclick="downloadDataset('jsonl')">
-            <span class="dl-icon">{ }</span>
-            <div><span class="dl-name">Raw JSONL</span><span class="dl-sub">standard instruction / response</span></div>
-          </button>
-          <button type="button" id="btn-dl-hf" class="btn-dl" onclick="downloadDataset('hf')">
-            <span class="dl-icon">🤗</span>
-            <div><span class="dl-name">HuggingFace Format</span><span class="dl-sub">chat messages compatible</span></div>
-          </button>
-          <button type="button" id="btn-dl-unsloth" class="btn-dl" onclick="downloadDataset('unsloth')">
-            <span class="dl-icon">⚡</span>
-            <div><span class="dl-name">Alpaca / Unsloth</span><span class="dl-sub">ready for LoRA fine-tuning</span></div>
-          </button>
-          <button type="button" id="btn-dl-excel" class="btn-dl" onclick="downloadDataset('excel')">
-            <span class="dl-icon">📊</span>
-            <div><span class="dl-name">Excel Spreadsheet</span><span class="dl-sub">easy to review and edit</span></div>
-          </button>
-        </div>
-        <div style="margin-top:1.5rem;text-align:center;">
-          <button type="button" class="btn-secondary" onclick="resetForNewGeneration()">↺ Generate Another</button>
-        </div>
       </div>
-    </section>
 
-  </main>
+    </div>
+  </div>
 
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- FOOTER                                                     -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
   <footer>
-    <p>Bengali AI Tutor Dataset Pipeline</p>
+    <p>AI-Powered Bengali Fine-Tuning Dataset Generator</p>
     <p style="margin-top:.4rem;font-size:.70rem;opacity:.7;">© 2026</p>
   </footer>
 
-  <!-- ══════════════════════════════════════════════════════════ -->
-  <!-- SETTINGS MODALS (one per section)                         -->
-  <!-- ══════════════════════════════════════════════════════════ -->
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- SETTINGS MODALS                                            -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
 
   <!-- CPT Settings Modal -->
   <div id="modal-cpt" class="modal-overlay" onclick="if(event.target===this)closeSectionSettings('cpt')">
@@ -544,11 +740,18 @@
           <option value="gpt-5.4-mini">gpt-5.4-mini (Default)</option>
           <option value="gpt-5.4">gpt-5.4</option>
           <option value="gpt-5.4-nano">gpt-5.4-nano</option>
-          <option value="o4-mini-2025-04-16">o4-mini-2025-04-16</option>
         </select>
-        <label for="cpt-pairs-count">Target Pairs / Chunks</label>
-        <input type="number" id="cpt-pairs-count" class="modal-input" value="500" min="50" max="5000" step="50"/>
-        <p class="hint">CPT data is raw text — higher counts = more training signal</p>
+        <label for="cpt-pairs-count">Target Pairs / Chunks (Max 100)</label>
+        <input type="number" id="cpt-pairs-count" class="modal-input" value="100" min="10" max="100" step="10" />
+        <p class="hint">CPT data is raw text — maximum 100 chunks per generation</p>
+        <label for="cpt-reasoning">Reasoning Effort</label>
+        <select id="cpt-reasoning" class="modal-select">
+          <option value="none">None</option>
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+        </select>
+        <p class="hint reasoning-hint">High reasoning will consume more time and tokens.</p>
         <label for="cpt-system-prompt">System Prompt (CPT Generation)</label>
         <textarea id="cpt-system-prompt" class="modal-textarea"></textarea>
         <label for="cpt-human-prompt">Generation Instructions</label>
@@ -574,11 +777,18 @@
           <option value="gpt-5.4-mini">gpt-5.4-mini (Default)</option>
           <option value="gpt-5.4">gpt-5.4</option>
           <option value="gpt-5.4-nano">gpt-5.4-nano</option>
-          <option value="o4-mini-2025-04-16">o4-mini-2025-04-16</option>
         </select>
-        <label for="sft-pairs-count">Target Instruction Pairs</label>
-        <input type="number" id="sft-pairs-count" class="modal-input" value="200" min="20" max="2000" step="20"/>
-        <p class="hint">Each pair = one &lt;instruction, response&gt; example for fine-tuning</p>
+        <label for="sft-pairs-count">Target Instruction Pairs (Max 100)</label>
+        <input type="number" id="sft-pairs-count" class="modal-input" value="100" min="10" max="100" step="10" />
+        <p class="hint">Maximum 100 pairs per generation</p>
+        <label for="sft-reasoning">Reasoning Effort</label>
+        <select id="sft-reasoning" class="modal-select">
+          <option value="none">None</option>
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+        </select>
+        <p class="hint reasoning-hint">High reasoning will consume more time and tokens.</p>
         <label for="sft-system-prompt">System Prompt (SFT Generation)</label>
         <textarea id="sft-system-prompt" class="modal-textarea"></textarea>
         <label for="sft-human-prompt">Generation Instructions</label>
@@ -604,11 +814,18 @@
           <option value="gpt-5.4-mini">gpt-5.4-mini (Default)</option>
           <option value="gpt-5.4">gpt-5.4</option>
           <option value="gpt-5.4-nano">gpt-5.4-nano</option>
-          <option value="o4-mini-2025-04-16">o4-mini-2025-04-16</option>
         </select>
-        <label for="dpo-pairs-count">Target Preference Triples</label>
-        <input type="number" id="dpo-pairs-count" class="modal-input" value="100" min="10" max="1000" step="10"/>
-        <p class="hint">Each triple = prompt + chosen response + rejected response</p>
+        <label for="dpo-pairs-count">Target Preference Triples (Max 100)</label>
+        <input type="number" id="dpo-pairs-count" class="modal-input" value="50" min="10" max="100" step="10" />
+        <p class="hint">Maximum 100 triples per generation</p>
+        <label for="dpo-reasoning">Reasoning Effort</label>
+        <select id="dpo-reasoning" class="modal-select">
+          <option value="none">None</option>
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+        </select>
+        <p class="hint reasoning-hint">High reasoning will consume more time and tokens.</p>
         <label for="dpo-rejection-style">Rejection Strategy</label>
         <select id="dpo-rejection-style" class="modal-select">
           <option value="pedagogical">Pedagogical (bad teaching style)</option>
@@ -630,4 +847,5 @@
 
   <script src="app.js"></script>
 </body>
+
 </html>

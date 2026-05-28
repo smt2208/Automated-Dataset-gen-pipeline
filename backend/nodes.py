@@ -39,9 +39,10 @@ from config import config
 # ══════════════════════════════════════════════════════════════════════════════
 
 class QAPair(BaseModel):
-    """SFT instruction–response pair."""
-    instruction: str = Field(description="The instruction or question in Bengali.")
-    response:    str = Field(description="The detailed, accurate response in Bengali.")
+    """SFT instruction–input–output pair."""
+    instruction: str = Field(description="The core task or question in Bengali.")
+    input:       str = Field(description="Additional context for the task in Bengali (can be empty/blank if the instruction is self-sufficient).")
+    output:      str = Field(description="The detailed, accurate response or correct answer in Bengali.")
 
 class QAPairsList(BaseModel):
     pairs: List[QAPair] = Field(description="List of instruction-response pairs.")
@@ -107,6 +108,7 @@ def pdf_node(state: GraphState) -> GraphState:
     """Extract text from a PDF (text layer first, OCR fallback for scanned pages)."""
     file_path = state["input_source"]
     try:
+        import gc
         doc = fitz.open(file_path)
         raw_text = []
         for page in doc:
@@ -119,6 +121,10 @@ def pdf_node(state: GraphState) -> GraphState:
                 ocr_text = _safe_ocr(img, config.TESSERACT_LANG).strip()
                 if ocr_text:
                     raw_text.append(ocr_text)
+                del img
+                del pix
+        doc.close()
+        gc.collect()
         if not raw_text:
             return {"errors": ["PDF had no extractable text and OCR returned nothing."]}
         return {"raw_documents": raw_text}
@@ -132,6 +138,7 @@ def docx_node(state: GraphState) -> GraphState:
     if not DOCX_AVAILABLE:
         return {"errors": ["python-docx is not installed. Run: pip install python-docx"]}
     try:
+        import gc
         document = python_docx.Document(file_path)
         paragraphs = [p.text.strip() for p in document.paragraphs if p.text.strip()]
         # Also grab text from tables
@@ -140,6 +147,8 @@ def docx_node(state: GraphState) -> GraphState:
                 for cell in row.cells:
                     if cell.text.strip():
                         paragraphs.append(cell.text.strip())
+        del document
+        gc.collect()
         if not paragraphs:
             return {"errors": ["DOCX file is empty or has no readable text."]}
         # Group paragraphs into chunks of ~10 for better LLM context
@@ -172,6 +181,7 @@ def ocr_node(state: GraphState) -> GraphState:
     try:
         image = Image.open(file_path)
         text = _safe_ocr(image, config.TESSERACT_LANG).strip()
+        image.close()
         if not text:
             return {"errors": ["OCR returned no text from this image."]}
         return {"raw_documents": [text]}
@@ -324,6 +334,9 @@ def openai_node(state: GraphState) -> GraphState:
     if "{context}" not in hum_prompt:
         hum_prompt = hum_prompt.strip() + "\n\nContext:\n{context}"
 
+    target_pairs = state.get("target_pairs") or 50
+    sys_prompt += f"\n\nIMPORTANT INSTRUCTION: You must generate EXACTLY {target_pairs} items."
+
     # ── Pick output schema based on mode ──────────────────────────────────────
     if mode == "cpt":
         output_schema = CPTChunksList
@@ -332,7 +345,12 @@ def openai_node(state: GraphState) -> GraphState:
     else:
         output_schema = QAPairsList
 
-    llm    = ChatOpenAI(model=llm_model, reasoning_effort=config.REASONING_EFFORT)
+    llm_kwargs = {"model": llm_model}
+    reasoning = state.get("reasoning_effort") or "none"
+    if reasoning != "none":
+        llm_kwargs["reasoning_effort"] = reasoning
+
+    llm    = ChatOpenAI(**llm_kwargs)
     prompt = ChatPromptTemplate.from_messages([
         ("system", sys_prompt),
         ("human",  hum_prompt),
@@ -348,7 +366,7 @@ def openai_node(state: GraphState) -> GraphState:
 
     # ── Map result to state fields ─────────────────────────────────────────────
     if mode == "cpt":
-        pairs = [{"instruction": c.text, "response": ""} for c in result.chunks]
+        pairs = [{"instruction": c.text, "input": "", "output": ""} for c in result.chunks]
         return {"qa_pairs": pairs}
     elif mode == "dpo":
         triples = [
@@ -357,7 +375,7 @@ def openai_node(state: GraphState) -> GraphState:
         ]
         return {"dpo_triples": triples}
     else:
-        pairs = [{"instruction": p.instruction, "response": p.response} for p in result.pairs]
+        pairs = [{"instruction": p.instruction, "input": p.input, "output": p.output} for p in result.pairs]
         return {"qa_pairs": pairs}
 
 
@@ -473,7 +491,7 @@ def output_node(state: GraphState) -> GraphState:
 
         # ── SFT (default) ─────────────────────────────────────────────────────
         else:
-            # Base JSONL: {instruction, response}
+            # Base JSONL: {instruction, input, output}
             with open(base_path, "w", encoding="utf-8") as f:
                 for p in pairs:
                     f.write(json.dumps(p, ensure_ascii=False) + "\n")
@@ -481,10 +499,13 @@ def output_node(state: GraphState) -> GraphState:
             # HF messages format
             with open(hf_path, "w", encoding="utf-8") as f:
                 for p in pairs:
+                    user_content = p["instruction"]
+                    if p.get("input"):
+                        user_content += "\n\n" + p["input"]
                     entry = {
                         "messages": [
-                            {"role": "user",      "content": p["instruction"]},
-                            {"role": "assistant", "content": p["response"]},
+                            {"role": "user",      "content": user_content},
+                            {"role": "assistant", "content": p.get("output", "")},
                         ]
                     }
                     f.write(json.dumps(entry, ensure_ascii=False) + "\n")
@@ -492,7 +513,7 @@ def output_node(state: GraphState) -> GraphState:
             # Unsloth / Alpaca format
             with open(unsloth_path, "w", encoding="utf-8") as f:
                 for p in pairs:
-                    entry = {"instruction": p["instruction"], "input": "", "output": p["response"]}
+                    entry = {"instruction": p["instruction"], "input": p.get("input", ""), "output": p.get("output", "")}
                     f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
             # Excel
@@ -501,9 +522,9 @@ def output_node(state: GraphState) -> GraphState:
                 wb = openpyxl.Workbook()
                 ws = wb.active
                 ws.title = "SFT Dataset"
-                ws.append(["instruction", "response"])
+                ws.append(["instruction", "input", "output"])
                 for p in pairs:
-                    ws.append([p["instruction"], p["response"]])
+                    ws.append([p["instruction"], p.get("input", ""), p.get("output", "")])
                 wb.save(excel_path)
 
         return {

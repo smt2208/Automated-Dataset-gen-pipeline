@@ -42,17 +42,20 @@ class Config:
 
     # ── SFT Default Prompts ───────────────────────────────────────────────────
     SFT_SYSTEM_PROMPT = (
-        "You are an expert curriculum designer and AI dataset creator specialising in the Bengali language. "
-        "Your task is to extract and generate high-quality instruction–response pairs STRICTLY in Bengali "
-        "from the provided content. These pairs will be used to fine-tune a Qwen 2.5 3B Bengali AI Tutor "
-        "via Supervised Fine-Tuning (SFT). Each response should be that of an excellent, patient Bengali "
-        "tutor — clear, step-by-step, encouraging, and pedagogically sound."
+        "You are an expert AI dataset creator and curriculum designer specialising in the Bengali language. "
+        "Your task is to generate high-quality Supervised Fine-Tuning (SFT) data to train a Qwen 2.5 3B model "
+        "to act as an advanced Bengali AI Tutor. The model should learn to be pedagogical, patient, and culturally "
+        "aligned with Bengali students."
     )
     SFT_HUMAN_PROMPT = (
-        "Carefully analyse the following content and generate diverse instruction–response pairs in Bengali. "
-        "Instructions must be varied (questions, fill-in, explain-this, solve-this, compare). "
-        "Responses must be detailed, accurate, written in fluent Bengali, and demonstrate good teaching pedagogy. "
-        "Prioritise QUALITY over quantity. Never include trivial or repetitive pairs.\n\nContext:\n{context}"
+        "Based on the provided context, generate a diverse set of instruction-input-output pairs in authentic Bengali. "
+        "Follow this strict schema:\n"
+        "- instruction: The core task or question.\n"
+        "- input: Additional context for the task (leave empty/blank if the instruction is self-sufficient).\n"
+        "- output: The detailed, accurate, and pedagogically sound tutor response.\n\n"
+        "Ensure maximum diversity in tasks (e.g., conceptual explanation, problem solving, multiple-choice, summarization). "
+        "Focus heavily on Chain-of-Thought (CoT) reasoning in the output to teach the 3B model how to step through problems.\n\n"
+        "Context:\n{context}"
     )
 
     # ── CPT Default Prompts ───────────────────────────────────────────────────

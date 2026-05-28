@@ -36,10 +36,14 @@ def _initial_state(
     hum:           str  | None = None,
     model:         str  | None = None,
     target_pairs:  int  | None = None,
+    reasoning:     str  | None = None,
     pipeline_mode: str  | None = "sft",
     domain:        str  | None = None,
     subdomains:    list | None = None,
 ) -> GraphState:
+    # Cap pairs to 100
+    tp = target_pairs or config.DEFAULT_PAIRS.get(pipeline_mode or "sft", 100)
+    tp = min(tp, 100)
     return {
         "input_type":    input_type,
         "input_source":  input_source,
@@ -47,7 +51,8 @@ def _initial_state(
         "system_prompt": sys,
         "human_prompt":  hum,
         "model":         model,
-        "target_pairs":  target_pairs or config.DEFAULT_PAIRS.get(pipeline_mode or "sft", 200),
+        "target_pairs":  tp,
+        "reasoning_effort": reasoning,
         "domain":        domain,
         "subdomains":    subdomains or [],
         "raw_documents": [],
@@ -104,7 +109,11 @@ async def upload_file(file: UploadFile = File(...)):
         )
     file_path = os.path.join(config.UPLOADS_DIR, file.filename)
     with open(file_path, "wb") as f:
-        f.write(await file.read())
+        while True:
+            chunk = await file.read(1024 * 1024)  # 1MB chunks
+            if not chunk:
+                break
+            f.write(chunk)
     return {"file_path": file_path, "input_type": input_type}
 
 
@@ -148,6 +157,7 @@ async def ws_process(websocket: WebSocket):
         hum_prompt    = data.get("human_prompt")
         custom_model  = data.get("model")
         target_pairs  = data.get("target_pairs")
+        reasoning     = data.get("reasoning_effort")
         domain        = data.get("domain")
         subdomains    = data.get("subdomains") or []
 
@@ -188,6 +198,7 @@ async def ws_process(websocket: WebSocket):
             hum           = hum_prompt,
             model         = custom_model,
             target_pairs  = int(target_pairs) if target_pairs else None,
+            reasoning     = reasoning,
             pipeline_mode = pipeline_mode,
             domain        = domain,
             subdomains    = subdomains,
@@ -301,7 +312,11 @@ async def process_file(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="Unsupported format.")
     file_path = os.path.join(config.UPLOADS_DIR, file.filename)
     with open(file_path, "wb") as f:
-        f.write(await file.read())
+        while True:
+            chunk = await file.read(1024 * 1024)
+            if not chunk:
+                break
+            f.write(chunk)
     final = dataset_pipeline.invoke(_initial_state(input_type, file_path))
     if final.get("errors"):
         return {"status": "error", "errors": final["errors"]}
