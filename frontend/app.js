@@ -77,37 +77,67 @@ const DOMAIN_DATA = {
   math: {
     label: '📐 Mathematics',
     subdomains: [
-      { id: 'arithmetic',  label: 'Arithmetic (Class 1–12)',               desc: 'Basic operations, fractions, decimals, percentages' },
-      { id: 'algebra',     label: 'Algebra — equations, polynomials',       desc: 'Linear & quadratic equations, factoring' },
-      { id: 'geometry',    label: 'Geometry — proofs, mensuration',         desc: 'Shapes, area, volume, Euclidean proofs' },
-      { id: 'statistics',  label: 'Statistics — mean, median, mode',        desc: 'Data analysis, probability, graphs' },
-      { id: 'word_probs',  label: 'Word Problems (Tk/₹ context)',           desc: 'Real-world Bengali context — local prices, names' },
+      { id: 'arithmetic',    label: 'Arithmetic (Class 1–12)',                  desc: 'Basic operations, fractions, decimals, percentages' },
+      { id: 'algebra',       label: 'Algebra — equations, polynomials',         desc: 'Linear & quadratic equations, factoring' },
+      { id: 'geometry',      label: 'Geometry — proofs, mensuration',           desc: 'Shapes, area, volume, Euclidean proofs' },
+      { id: 'trigonometry',  label: 'Trigonometry — ratios, identities',        desc: 'Heights & distances, trigonometric identities' },
+      { id: 'statistics',    label: 'Statistics — mean, median, probability',   desc: 'Data analysis, probability, graphs' },
+      { id: 'calculus',      label: 'Calculus (Class 11–12)',                   desc: 'Differentiation, integration, limits' },
+      { id: 'set_theory',    label: 'Set Theory — Venn diagrams, relations',    desc: 'Sets, subsets, unions, intersections' },
+      { id: 'number_theory', label: 'Number Theory — primes, HCF, LCM',        desc: 'Divisibility, prime factorization, modular arithmetic' },
+      { id: 'word_probs',    label: 'Word Problems (Tk/₹ context)',             desc: 'Real-world Bengali context — local prices, names' },
     ]
   },
   science: {
     label: '🔬 Science',
     subdomains: [
-      { id: 'physics',    label: 'Physics — motion, force, light, electricity', desc: 'Key chapters for Class 6–12' },
-      { id: 'chemistry',  label: 'Chemistry — elements, reactions',             desc: 'Periodic table, chemical equations, bonding' },
-      { id: 'biology',    label: 'Biology — cells, human body, plants',         desc: 'Ecosystems, photosynthesis, nutrition' },
+      { id: 'physics',      label: 'Physics — motion, force, light, electricity', desc: 'Key chapters for Class 6–12' },
+      { id: 'chemistry',    label: 'Chemistry — elements, reactions',              desc: 'Periodic table, chemical equations, bonding' },
+      { id: 'biology',      label: 'Biology — cells, human body, plants',          desc: 'Ecosystems, photosynthesis, nutrition' },
+      { id: 'env_science',  label: 'Environmental Science',                        desc: 'Pollution, conservation, climate change' },
+      { id: 'astronomy',    label: 'Astronomy — solar system, stars',              desc: 'Space science, celestial bodies, ISRO' },
     ]
   },
   bengali_lang: {
     label: '📖 Bengali Language & Literature',
     subdomains: [
-      { id: 'grammar',        label: 'ব্যাকরণ — সন্ধি, সমাস, কারক, বিভক্তি', desc: 'Bengali grammar rules and patterns' },
-      { id: 'comprehension',  label: 'Comprehension passages',                   desc: 'Reading and understanding Bengali texts' },
-      { id: 'essay',          label: 'রচনা — Essay writing',                     desc: 'Structured Bengali essay composition' },
-      { id: 'literature',     label: 'Poem/Prose — Tagore, Nazrul, Sukumar Ray', desc: 'Famous Bengali literary works explained' },
+      { id: 'grammar',        label: 'ব্যাকরণ — সন্ধি, সমাস, কারক, বিভক্তি',  desc: 'Bengali grammar rules and patterns' },
+      { id: 'comprehension',  label: 'Comprehension passages',                     desc: 'Reading and understanding Bengali texts' },
+      { id: 'essay',          label: 'রচনা / প্রবন্ধ — Essay writing',            desc: 'Structured Bengali essay composition' },
+      { id: 'literature',     label: 'Poem/Prose — Tagore, Nazrul, Sukumar Ray',   desc: 'Famous Bengali literary works explained' },
+      { id: 'letter',         label: 'চিঠি / আবেদনপত্র — Letter writing',         desc: 'Formal & informal letter/application formats' },
+      { id: 'translation',    label: 'অনুবাদ — Translation (En ↔ Bn)',             desc: 'English to Bengali and Bengali to English' },
+      { id: 'report',         label: 'প্রতিবেদন / সংলাপ — Report & Dialogue',     desc: 'Report writing and dialogue composition' },
     ]
   },
   social: {
     label: '🌍 Social Studies / Geography',
     subdomains: [
-      { id: 'geo_wb',      label: 'Geography — West Bengal & World',          desc: 'Physical and political geography' },
-      { id: 'history_bn',  label: 'Bengali & Indian History',                  desc: 'Pre-colonial to modern Indian history' },
-      { id: 'world_hist',  label: 'World History',                             desc: 'Ancient, medieval, and modern world events' },
-      { id: 'civics',      label: 'Civics — Government structure',             desc: 'Indian constitution, local governance' },
+      { id: 'geo_wb',          label: 'Geography — West Bengal & World',           desc: 'Physical and political geography' },
+      { id: 'history_bn',      label: 'Bengali & Indian History',                  desc: 'Pre-colonial to modern Indian history' },
+      { id: 'world_hist',      label: 'World History',                             desc: 'Ancient, medieval, and modern world events' },
+      { id: 'civics',          label: 'Civics — Government structure',             desc: 'Indian constitution, local governance' },
+      { id: 'economics',       label: 'Basic Economics',                           desc: 'Demand, supply, banking, Indian economy' },
+      { id: 'current_affairs', label: 'Current Affairs — Bengal & India',           desc: 'Recent events, schemes, policy updates' },
+      { id: 'env_studies',     label: 'Environmental Studies',                     desc: 'Sustainability, ecology, SDGs' },
+    ]
+  },
+  ict: {
+    label: '🖥️ ICT / Computer Science',
+    subdomains: [
+      { id: 'digital_lit',  label: 'Digital Literacy',                            desc: 'Internet basics, email, office tools' },
+      { id: 'programming',  label: 'Programming Basics — Python, algorithms',     desc: 'Flowcharts, loops, functions, data types' },
+      { id: 'data_struct',  label: 'Data Structures',                             desc: 'Arrays, lists, sorting, searching' },
+      { id: 'networking',   label: 'Networking & Cyber Safety',                   desc: 'Protocols, internet safety, online privacy' },
+    ]
+  },
+  reasoning: {
+    label: '🧩 Reasoning & Mental Ability',
+    subdomains: [
+      { id: 'logical',       label: 'Logical Reasoning',                          desc: 'Syllogisms, Venn diagrams, puzzles' },
+      { id: 'number_series', label: 'Number & Pattern Series',                    desc: 'Sequences, analogies, missing numbers' },
+      { id: 'verbal',        label: 'Verbal Reasoning',                           desc: 'Coding-decoding, blood relations, directions' },
+      { id: 'non_verbal',    label: 'Non-Verbal Reasoning',                       desc: 'Figure completion, mirror image, paper folding' },
     ]
   }
 };
@@ -117,25 +147,25 @@ const DOMAIN_DATA = {
 const DEFAULTS = {
   cpt: {
     model: 'gpt-5.4-mini',
-    pairs: 100,
-    reasoning: 'none',
-    system: `You are an expert Bengali corpus builder specialising in educational content for the Qwen 2.5 3B model. Your task is to generate fluent, natural Bengali raw text chunks that will be used for Continued Pre-Training (CPT). The text must be factually accurate, culturally appropriate, and written entirely in authentic Bengali (বাংলা). Avoid mixing English unnecessarily.`,
-    human:  `Generate rich, diverse Bengali raw text passages based on the provided context or domain. The text should feel like it comes from authentic Bengali educational resources — textbooks, encyclopaedias, or well-written articles. Cover the topic comprehensively. Vary sentence structure and vocabulary. Write in a clear, educational register suitable for secondary students. Output only Bengali text, no meta-commentary.`,
+    pairs: 50,
+    reasoning: 'low',
+    system: `You are an expert Bengali language corpus architect. Your task is to generate high-quality, natural Bengali (বাংলা) raw text passages for Continued Pre-Training (CPT) of a language model that will serve as a Bengali AI tutor.\n\nQuality Standards:\n• Write entirely in authentic, fluent Bengali — avoid unnecessary English mixing unless it is natural in the educational context (e.g., technical terms like 'DNA', 'algorithm').\n• Content must be factually accurate, well-structured, and pedagogically sound.\n• Use diverse writing styles: expository, narrative, dialogic (teacher-student conversation), and analytical.\n• Target Class 6–12 students across West Bengal and Bangladesh curricula.\n• Include culturally grounded examples: local names, prices in ₹/৳, Bengali festivals, geography, and historical references.\n• Vary sentence length and complexity — mix simple explanations with advanced academic prose.`,
+    human: `Generate rich, diverse Bengali raw text passages based on the provided context. Each passage should feel like it comes from an authentic Bengali educational resource — a textbook chapter, encyclopedia entry, well-written magazine article, or a teacher's detailed explanation.\n\nRequirements:\n1. Cover the topic comprehensively with depth and accuracy.\n2. Use varied registers: some passages formal/academic, others conversational/explanatory.\n3. Include specific examples, numbers, and facts grounded in Bengali/South Asian context.\n4. Naturally integrate subject-specific terminology (transliterated English terms are acceptable where standard in Bengali education).\n5. Output only Bengali text — no meta-commentary, headers, or labels.`,
   },
   sft: {
     model: 'gpt-5.4-mini',
-    pairs: 100,
-    reasoning: 'none',
-    system: `You are an expert AI dataset creator and curriculum designer specialising in the Bengali language. Your task is to generate high-quality Supervised Fine-Tuning (SFT) data to train a Qwen 2.5 3B model to act as an advanced Bengali AI Tutor. The model should learn to be pedagogical, patient, and culturally aligned with Bengali students.`,
-    human:  `Based on the provided context, generate a diverse set of instruction-input-output pairs in authentic Bengali. Follow this strict schema:\\n- instruction: The core task or question.\\n- input: Additional context for the task (leave empty/blank if the instruction is self-sufficient).\\n- output: The detailed, accurate, and pedagogically sound tutor response.\\n\\nEnsure maximum diversity in tasks (e.g., conceptual explanation, problem solving, multiple-choice, summarization). Focus heavily on Chain-of-Thought (CoT) reasoning in the output to teach the 3B model how to step through problems.`,
+    pairs: 50,
+    reasoning: 'low',
+    system: `You are an expert AI dataset creator building Supervised Fine-Tuning (SFT) data for a Bengali AI Tutor. The tutor must become pedagogically excellent, patient, and culturally aligned with Bengali students (Class 6–12, West Bengal & Bangladesh curricula).\n\nData Quality Standards:\n• Generate instruction-input-output triples following the Alpaca schema.\n• The 'output' field MUST demonstrate expert-level Chain-of-Thought (CoT) reasoning — show step-by-step thinking, not just final answers.\n• Ensure maximum diversity in task types: conceptual explanation, problem solving, step-by-step derivation, multiple-choice with reasoning, summarization, comparison, error correction, translation, creative writing, and real-world application.\n• Use authentic Bengali throughout with culturally appropriate examples (local names, ₹/৳ prices, NCTB/WBBSE references).\n• Vary difficulty from basic (Class 6) to advanced (Class 12 / competitive exam level).\n\nCROSS-LINGUAL REQUIREMENT: At least 5% of ALL generated items MUST have the 'instruction' written in English while the 'output' is entirely in Bengali. This teaches the model to understand English queries and respond fluently in Bengali — a critical real-world capability for Bengali students who often ask questions in English.`,
+    human: `Based on the provided context, generate a diverse set of instruction-input-output triples:\n- instruction: The core task or question (primarily Bengali; at least 5% MUST be in English).\n- input: Additional context for the task (leave blank if instruction is self-sufficient).\n- output: Detailed Bengali response with clear Chain-of-Thought reasoning.\n\nTask Diversity (cover as many as possible):\n• Conceptual explanation ('এটা কী?', 'ব্যাখ্যা করো')\n• Problem solving with step-by-step working\n• Multiple-choice with elimination reasoning\n• Summarization of passages or concepts\n• Compare & contrast between related concepts\n• Error identification & correction\n• Real-world application problems (Bengali context)\n• English→Bengali cross-lingual Q&A (minimum 5%)\n\nFor cross-lingual items, write the instruction in natural English (e.g., 'Explain photosynthesis in Bengali with examples') and provide the full response in Bengali.`,
   },
   dpo: {
     model: 'gpt-5.4-mini',
     pairs: 50,
-    reasoning: 'none',
+    reasoning: 'low',
     rejectionStyle: 'mixed',
-    system: `You are an expert in Bengali educational AI alignment. Your task is to generate DPO (Direct Preference Optimization) training triples for a Bengali AI Tutor — Qwen 2.5 3B. Each triple must contain: (1) a Bengali student prompt, (2) a CHOSEN response that is pedagogically excellent, accurate, and fluent in Bengali, and (3) a REJECTED response that has clear flaws — bad teaching style, factual errors, or poor Bengali — as per the rejection strategy.`,
-    human:  `Generate DPO preference triples in Bengali for the specified domain. The chosen response should exemplify an ideal Bengali tutor: clear explanation, step-by-step reasoning, culturally appropriate examples, encouraging tone. The rejected response should be plausibly wrong but noticeably inferior. Output as structured JSON with "prompt", "chosen", "rejected" fields. Ensure diversity across question types and difficulty levels.`,
+    system: `You are an expert in AI alignment for Bengali education. Your task is to generate DPO (Direct Preference Optimization) training triples for a Bengali AI Tutor. Each triple trains the model to prefer high-quality responses over flawed ones.\n\nTriple Structure:\n• prompt: A student question or task (at least 5% MUST be in English for cross-lingual training).\n• chosen: The ideal tutor response — pedagogically excellent, accurate, fluent Bengali, encouraging tone, step-by-step reasoning, culturally appropriate examples.\n• rejected: A plausibly written but clearly inferior response with specific flaws.\n\nRejection Flaws (vary across these categories):\n1. Pedagogical: Skips steps, gives answer without explanation, condescending tone.\n2. Factual: Contains incorrect facts, wrong formulas, misleading information.\n3. Linguistic: Poor Bengali grammar, excessive English mixing, unnatural phrasing.\n4. Structural: Disorganized, no clear reasoning flow, missing key steps, too brief.\n\nCROSS-LINGUAL REQUIREMENT: At least 5% of ALL generated triples MUST have the 'prompt' in English, with both 'chosen' and 'rejected' responses in Bengali.\n\nQuality Standard: The difference between chosen and rejected must be clear and educational — a human annotator should immediately see why 'chosen' is better.`,
+    human: `Generate DPO preference triples for the specified domain:\n- prompt: A student question (primarily Bengali; at least 5% in English)\n- chosen: The ideal Bengali tutor response with clear reasoning and step-by-step explanation\n- rejected: A plausibly written but flawed Bengali response\n\nEnsure diversity across:\n• Question types (conceptual, computational, analytical, creative)\n• Difficulty levels (basic to advanced)\n• Rejection strategies (pedagogical flaws, factual errors, poor Bengali, structural problems)\n• Cross-lingual items (English prompt → Bengali responses, minimum 5%)\n\nFor cross-lingual triples, write the prompt in natural English (e.g., 'Can you explain the water cycle?') and provide both chosen and rejected in Bengali.\n\nThe chosen response should exemplify an ideal Bengali tutor with step-by-step reasoning. The rejected response should be noticeably inferior but not obviously garbage.`,
   },
 };
 
@@ -644,7 +674,7 @@ function saveSectionSettings(section) {
 
   sectionSettings[section].model     = model  || DEFAULTS[section].model;
   sectionSettings[section].pairs     = pairs;
-  sectionSettings[section].reasoning = reasoning || 'none';
+  sectionSettings[section].reasoning = reasoning || DEFAULTS[section].reasoning;
   sectionSettings[section].system    = system || DEFAULTS[section].system;
   sectionSettings[section].human     = human  || DEFAULTS[section].human;
 

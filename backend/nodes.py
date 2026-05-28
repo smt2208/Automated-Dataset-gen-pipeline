@@ -2,13 +2,15 @@ import os
 import re
 import json
 import uuid
-import pytesseract
+import gc
 import fitz  # PyMuPDF
 
 try:
+    import pytesseract
     from PIL import Image
+    OCR_AVAILABLE = True
 except ImportError:
-    pass
+    OCR_AVAILABLE = False
 
 try:
     import docx as python_docx   # python-docx
@@ -22,16 +24,22 @@ try:
 except ImportError:
     EXCEL_AVAILABLE = False
 
-from langchain_core.documents import Document
-from langchain_community.document_transformers import Html2TextTransformer
-from langchain_apify import ApifyWrapper
+try:
+    import html2text as _h2t
+    H2T_AVAILABLE = True
+except ImportError:
+    H2T_AVAILABLE = False
+
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List
 
 from state import GraphState
 from config import config
+
+# Max total context chars sent to LLM in one call
+_MAX_CONTEXT_CHARS = 50000
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -40,9 +48,9 @@ from config import config
 
 class QAPair(BaseModel):
     """SFT instruction–input–output pair."""
-    instruction: str = Field(description="The core task or question in Bengali.")
-    input:       str = Field(description="Additional context for the task in Bengali (can be empty/blank if the instruction is self-sufficient).")
-    output:      str = Field(description="The detailed, accurate response or correct answer in Bengali.")
+    instruction: str = Field(description="The core task or question — primarily in Bengali, but can be in English for cross-lingual items.")
+    input:       str = Field(description="Additional context for the task (can be empty/blank if the instruction is self-sufficient).")
+    output:      str = Field(description="The detailed, accurate Bengali response with step-by-step Chain-of-Thought reasoning.")
 
 class QAPairsList(BaseModel):
     pairs: List[QAPair] = Field(description="List of instruction-response pairs.")
@@ -58,9 +66,9 @@ class CPTChunksList(BaseModel):
 
 class DPOTriple(BaseModel):
     """DPO preference triple."""
-    prompt:   str = Field(description="The Bengali student question or prompt.")
-    chosen:   str = Field(description="The preferred, pedagogically excellent Bengali response.")
-    rejected: str = Field(description="The inferior, flawed Bengali response to be rejected.")
+    prompt:   str = Field(description="A student question or prompt — primarily in Bengali, but can be in English for cross-lingual items.")
+    chosen:   str = Field(description="The preferred, pedagogically excellent Bengali response with clear step-by-step reasoning.")
+    rejected: str = Field(description="The inferior, flawed Bengali response with specific pedagogical, factual, or linguistic problems.")
 
 class DPOTriplesList(BaseModel):
     triples: List[DPOTriple] = Field(description="List of DPO preference triples.")
@@ -74,6 +82,8 @@ def scrape_node(state: GraphState) -> GraphState:
     """Scrape the given URL using Apify."""
     url = state["input_source"]
     try:
+        from langchain_core.documents import Document
+        from langchain_apify import ApifyWrapper
         apify = ApifyWrapper()
         loader = apify.call_actor(
             actor_id=config.APIFY_ACTOR_ID,
@@ -89,6 +99,8 @@ def scrape_node(state: GraphState) -> GraphState:
         )
         docs = loader.load()
         raw_text = [doc.page_content for doc in docs if doc.page_content.strip()]
+        del docs, loader, apify
+        gc.collect()
         if not raw_text:
             return {"errors": ["Scraping returned no content from the URL."]}
         return {"raw_documents": raw_text}
@@ -105,26 +117,38 @@ def _safe_ocr(image, lang: str) -> str:
 
 
 def pdf_node(state: GraphState) -> GraphState:
-    """Extract text from a PDF (text layer first, OCR fallback for scanned pages)."""
+    """Extract text from a PDF (text layer first, OCR fallback at low DPI)."""
     file_path = state["input_source"]
     try:
-        import gc
         doc = fitz.open(file_path)
         raw_text = []
-        for page in doc:
+        for i in range(len(doc)):
+            page = doc.load_page(i)
             text = page.get_text().strip()
             if text:
                 raw_text.append(text)
-            else:
-                pix = page.get_pixmap(dpi=200)
+            elif OCR_AVAILABLE:
+                # Low DPI (120) to save memory — A4 page ≈ 8MB vs 40MB at 200 DPI
+                pix = page.get_pixmap(dpi=120)
                 img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
                 ocr_text = _safe_ocr(img, config.TESSERACT_LANG).strip()
                 if ocr_text:
                     raw_text.append(ocr_text)
-                del img
-                del pix
+                del img, pix
+            del page
+            # Force cleanup after every page
+            if i % 3 == 0:
+                gc.collect()
         doc.close()
+        del doc
         gc.collect()
+
+        # Delete the uploaded file to free disk/memory
+        try:
+            os.remove(file_path)
+        except OSError:
+            pass
+
         if not raw_text:
             return {"errors": ["PDF had no extractable text and OCR returned nothing."]}
         return {"raw_documents": raw_text}
@@ -138,10 +162,8 @@ def docx_node(state: GraphState) -> GraphState:
     if not DOCX_AVAILABLE:
         return {"errors": ["python-docx is not installed. Run: pip install python-docx"]}
     try:
-        import gc
         document = python_docx.Document(file_path)
         paragraphs = [p.text.strip() for p in document.paragraphs if p.text.strip()]
-        # Also grab text from tables
         for table in document.tables:
             for row in table.rows:
                 for cell in row.cells:
@@ -149,9 +171,15 @@ def docx_node(state: GraphState) -> GraphState:
                         paragraphs.append(cell.text.strip())
         del document
         gc.collect()
+
+        # Delete uploaded file
+        try:
+            os.remove(file_path)
+        except OSError:
+            pass
+
         if not paragraphs:
             return {"errors": ["DOCX file is empty or has no readable text."]}
-        # Group paragraphs into chunks of ~10 for better LLM context
         chunk_size = 10
         chunks = [
             "\n".join(paragraphs[i:i + chunk_size])
@@ -235,21 +263,43 @@ def domain_node(state: GraphState) -> GraphState:
         context_parts += [
             "  • For mathematics: show step-by-step working in Bengali.",
             "  • Include word problems with Bengali-context numbers (e.g., মূল্য ৳৫০, দূরত্ব ১২ কিমি).",
+            "  • Cover both WBBSE and NCTB syllabus topics where applicable.",
+            "  • Include competitive exam level problems (Olympiad, JEE, WBCS) for advanced topics.",
         ]
     elif domain == "science":
         context_parts += [
             "  • For science: explain concepts clearly with real-world Bengali examples.",
             "  • Reference NCTB (জাতীয় শিক্ষাক্রম ও পাঠ্যপুস্তক বোর্ড) curriculum level.",
+            "  • Include diagrams described in text (e.g., 'একটি চিত্রে দেখানো হলো...').",
+            "  • Relate science to everyday life in Bengal (e.g., Ganga delta for geography, agriculture for biology).",
         ]
     elif domain == "bengali_lang":
         context_parts += [
-            "  • For Bengali language: use authentic literary sources (Tagore, Nazrul, Sukumar Ray).",
+            "  • For Bengali language: use authentic literary sources (Tagore, Nazrul, Sukumar Ray, Bankim, Sarat).",
             "  • Grammar examples must use correct বাংলা terminology.",
+            "  • Include letter/application writing formats as per WBBSE/NCTB standards.",
+            "  • For translation tasks: provide accurate English ↔ Bengali equivalents with context.",
         ]
     elif domain == "social":
         context_parts += [
             "  • For social studies: include specific facts about West Bengal, Bangladesh, and Indian history.",
             "  • Reference key historical events, geographical features, and government structures.",
+            "  • For economics: use examples with Indian Rupee (₹) and Bangladeshi Taka (৳).",
+            "  • Include current events and SDG-related topics where relevant.",
+        ]
+    elif domain == "ict":
+        context_parts += [
+            "  • For ICT: explain technical concepts in simple Bengali with English technical terms.",
+            "  • Programming examples should use Bengali variable names and comments where possible.",
+            "  • Cover digital literacy for rural Bengali students — basic internet, email, safety.",
+            "  • Include practical scenarios: online forms, banking apps, educational websites.",
+        ]
+    elif domain == "reasoning":
+        context_parts += [
+            "  • For reasoning: provide clear worked examples in Bengali before each problem type.",
+            "  • Include problems similar to competitive exams: WBCS, SSC, Railway, Banking.",
+            "  • Pattern and series questions should use Bengali numerals (১, ২, ৩) alongside Arabic.",
+            "  • Verbal reasoning questions should use Bengali language-based coding/decoding.",
         ]
 
     context = "\n".join(context_parts)
@@ -263,7 +313,7 @@ def domain_node(state: GraphState) -> GraphState:
 def clean_node(state: GraphState) -> GraphState:
     """
     Make extracted text LLM-ready.
-    - For web-scraped content: use Html2TextTransformer to strip HTML artefacts.
+    - For web-scraped content: use html2text to strip HTML artefacts.
     - For PDF/DOCX/domain content: light whitespace normalization only.
     """
     raw_docs = state.get("raw_documents", [])
@@ -273,13 +323,17 @@ def clean_node(state: GraphState) -> GraphState:
     input_type = state.get("input_type", "")
     cleaned = []
 
-    if input_type == "url":
-        # Web content — strip HTML/markdown artefacts
-        docs = [Document(page_content=t) for t in raw_docs if t.strip()]
-        transformer = Html2TextTransformer()
-        transformed = transformer.transform_documents(docs)
-        for doc in transformed:
-            text = re.sub(r'[ \t]+', ' ', doc.page_content)
+    if input_type == "url" and H2T_AVAILABLE:
+        # Web content — strip HTML/markdown artefacts using lightweight html2text
+        converter = _h2t.HTML2Text()
+        converter.ignore_links = True
+        converter.ignore_images = True
+        converter.body_width = 0  # no line wrapping
+        for raw in raw_docs:
+            if not raw.strip():
+                continue
+            text = converter.handle(raw)
+            text = re.sub(r'[ \t]+', ' ', text)
             text = re.sub(r'\n{3,}', '\n\n', text).strip()
             if len(text) > 80:
                 cleaned.append(text)
@@ -290,6 +344,10 @@ def clean_node(state: GraphState) -> GraphState:
             text = re.sub(r'\n{3,}', '\n\n', text).strip()
             if len(text) > 30:
                 cleaned.append(text)
+
+    # Free raw documents from memory
+    del raw_docs
+    gc.collect()
 
     if not cleaned:
         return {"errors": ["After cleaning, no usable text remained."]}
@@ -346,7 +404,7 @@ def openai_node(state: GraphState) -> GraphState:
         output_schema = QAPairsList
 
     llm_kwargs = {"model": llm_model}
-    reasoning = state.get("reasoning_effort") or "none"
+    reasoning = state.get("reasoning_effort") or "low"
     if reasoning != "none":
         llm_kwargs["reasoning_effort"] = reasoning
 
@@ -358,12 +416,18 @@ def openai_node(state: GraphState) -> GraphState:
     chain = prompt | llm.with_structured_output(output_schema)
 
     full_text = "\n\n---\n\n".join(texts)
+    # Truncate context to prevent OOM on huge documents
+    if len(full_text) > _MAX_CONTEXT_CHARS:
+        full_text = full_text[:_MAX_CONTEXT_CHARS]
 
     try:
         result = chain.invoke({"context": full_text})
     except Exception as e:
         return {"errors": [f"LLM generation failed: {str(e)}"]}
-
+    finally:
+        # Aggressively free LLM objects
+        del chain, prompt, llm
+        gc.collect()
     # ── Map result to state fields ─────────────────────────────────────────────
     if mode == "cpt":
         pairs = [{"instruction": c.text, "input": "", "output": ""} for c in result.chunks]

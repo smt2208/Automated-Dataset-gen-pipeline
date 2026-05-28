@@ -9,7 +9,6 @@ langchain-community==0.3.31
 langchain-apify==0.1.6
 apify-client==2.5.0
 pymupdf==1.27.2.2
-unstructured[pdf]==0.22.21
 pytesseract==0.3.13
 pillow==12.2.0
 html2text==2025.4.15
@@ -17,5 +16,4 @@ openpyxl==3.1.5
 python-multipart==0.0.26
 pydantic==2.13.2
 python-dotenv==1.1.0
-sse-starlette==3.0.3
 python-docx==1.1.2

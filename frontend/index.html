@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AI Powered Bengali Dataset Generator</title>
   <meta name="description"
-    content="Automated Bengali dataset generation pipeline for CPT, SFT, and DPO fine-tuning of Qwen 2.5 3B via LoRA.">
+    content="Automated Bengali dataset generation pipeline for CPT, SFT, and DPO fine-tuning of language models.">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link
@@ -164,7 +164,7 @@
         <div class="feature-card">
           <div class="feature-icon">🎯</div>
           <h4>Domain-Specific</h4>
-          <p>Math, Science, Bengali Literature, Social Studies — all covered</p>
+          <p>Math, Science, Bengali Literature, Social Studies, ICT, Reasoning &amp; more</p>
         </div>
         <div class="feature-card">
           <div class="feature-icon">📊</div>
@@ -268,25 +268,27 @@
           <div class="domain-card" data-domain="math" onclick="selectDomain('cpt', 'math')">
             <div class="domain-header"><span class="domain-emoji">📐</span><span class="domain-name">Mathematics</span></div>
             <div class="domain-topics">
-              <span class="topic-tag">Arithmetic (Class 1-12)</span><span class="topic-tag">Algebra</span>
-              <span class="topic-tag">Geometry</span><span class="topic-tag">Statistics</span>
-              <span class="topic-tag">Word Problems (Tk/₹)</span>
+              <span class="topic-tag">Arithmetic</span><span class="topic-tag">Algebra</span>
+              <span class="topic-tag">Geometry</span><span class="topic-tag">Trigonometry</span>
+              <span class="topic-tag">Statistics</span><span class="topic-tag">Calculus</span>
+              <span class="topic-tag">Set Theory</span><span class="topic-tag">Word Problems (Tk/₹)</span>
             </div>
           </div>
           <div class="domain-card" data-domain="science" onclick="selectDomain('cpt', 'science')">
             <div class="domain-header"><span class="domain-emoji">🔬</span><span class="domain-name">Science</span></div>
             <div class="domain-topics">
               <span class="topic-tag">Physics</span><span class="topic-tag">Chemistry</span>
-              <span class="topic-tag">Biology</span><span class="topic-tag">Periodic Table</span>
-              <span class="topic-tag">Ecosystems</span>
+              <span class="topic-tag">Biology</span><span class="topic-tag">Env Science</span>
+              <span class="topic-tag">Astronomy</span>
             </div>
           </div>
           <div class="domain-card" data-domain="bengali_lang" onclick="selectDomain('cpt', 'bengali_lang')">
-            <div class="domain-header"><span class="domain-emoji">📖</span><span class="domain-name">Bengali Language & Literature</span></div>
+            <div class="domain-header"><span class="domain-emoji">📖</span><span class="domain-name">Bengali Language &amp; Literature</span></div>
             <div class="domain-topics">
               <span class="topic-tag">ব্যাকরণ (Grammar)</span><span class="topic-tag">সন্ধি · সমাস</span>
               <span class="topic-tag">Comprehension</span><span class="topic-tag">Tagore · Nazrul</span>
-              <span class="topic-tag">রচনা Writing</span>
+              <span class="topic-tag">রচনা Writing</span><span class="topic-tag">চিঠি / আবেদনপত্র</span>
+              <span class="topic-tag">অনুবাদ Translation</span>
             </div>
           </div>
           <div class="domain-card" data-domain="social" onclick="selectDomain('cpt', 'social')">
@@ -294,7 +296,22 @@
             <div class="domain-topics">
               <span class="topic-tag">West Bengal Geography</span><span class="topic-tag">Bengali History</span>
               <span class="topic-tag">Indian History</span><span class="topic-tag">World History</span>
-              <span class="topic-tag">Civics</span>
+              <span class="topic-tag">Civics</span><span class="topic-tag">Economics</span>
+              <span class="topic-tag">Current Affairs</span>
+            </div>
+          </div>
+          <div class="domain-card" data-domain="ict" onclick="selectDomain('cpt', 'ict')">
+            <div class="domain-header"><span class="domain-emoji">🖥️</span><span class="domain-name">ICT / Computer Science</span></div>
+            <div class="domain-topics">
+              <span class="topic-tag">Digital Literacy</span><span class="topic-tag">Programming</span>
+              <span class="topic-tag">Data Structures</span><span class="topic-tag">Cyber Safety</span>
+            </div>
+          </div>
+          <div class="domain-card" data-domain="reasoning" onclick="selectDomain('cpt', 'reasoning')">
+            <div class="domain-header"><span class="domain-emoji">🧩</span><span class="domain-name">Reasoning &amp; Mental Ability</span></div>
+            <div class="domain-topics">
+              <span class="topic-tag">Logical Reasoning</span><span class="topic-tag">Number Series</span>
+              <span class="topic-tag">Verbal Reasoning</span><span class="topic-tag">Non-Verbal</span>
             </div>
           </div>
         </div>
@@ -324,7 +341,7 @@
           <div class="pipe-connector"></div>
           <div class="pipe-step" id="cpt-ps-extract">
             <div class="pipe-dot"></div>
-            <div class="pipe-info"><span class="pipe-name" id="cpt-ps-extract-name">Reading Content</span><span class="pipe-desc">Extracting Bengali text</span></div>
+            <div class="pipe-info"><span class="pipe-name" id="cpt-ps-extract-name">Reading Content</span><span class="pipe-desc">Extracting text</span></div>
             <span class="pipe-state">—</span>
           </div>
           <div class="pipe-connector"></div>
@@ -456,25 +473,27 @@
           <div class="domain-card" data-domain="math" onclick="selectDomain('sft', 'math')">
             <div class="domain-header"><span class="domain-emoji">📐</span><span class="domain-name">Mathematics</span></div>
             <div class="domain-topics">
-              <span class="topic-tag">Arithmetic (Class 1-12)</span><span class="topic-tag">Algebra</span>
-              <span class="topic-tag">Geometry</span><span class="topic-tag">Statistics</span>
-              <span class="topic-tag">Word Problems (Tk/₹)</span>
+              <span class="topic-tag">Arithmetic</span><span class="topic-tag">Algebra</span>
+              <span class="topic-tag">Geometry</span><span class="topic-tag">Trigonometry</span>
+              <span class="topic-tag">Statistics</span><span class="topic-tag">Calculus</span>
+              <span class="topic-tag">Set Theory</span><span class="topic-tag">Word Problems (Tk/₹)</span>
             </div>
           </div>
           <div class="domain-card" data-domain="science" onclick="selectDomain('sft', 'science')">
             <div class="domain-header"><span class="domain-emoji">🔬</span><span class="domain-name">Science</span></div>
             <div class="domain-topics">
               <span class="topic-tag">Physics</span><span class="topic-tag">Chemistry</span>
-              <span class="topic-tag">Biology</span><span class="topic-tag">Periodic Table</span>
-              <span class="topic-tag">Ecosystems</span>
+              <span class="topic-tag">Biology</span><span class="topic-tag">Env Science</span>
+              <span class="topic-tag">Astronomy</span>
             </div>
           </div>
           <div class="domain-card" data-domain="bengali_lang" onclick="selectDomain('sft', 'bengali_lang')">
-            <div class="domain-header"><span class="domain-emoji">📖</span><span class="domain-name">Bengali Language & Literature</span></div>
+            <div class="domain-header"><span class="domain-emoji">📖</span><span class="domain-name">Bengali Language &amp; Literature</span></div>
             <div class="domain-topics">
               <span class="topic-tag">ব্যাকরণ (Grammar)</span><span class="topic-tag">সন্ধি · সমাস</span>
               <span class="topic-tag">Comprehension</span><span class="topic-tag">Tagore · Nazrul</span>
-              <span class="topic-tag">রচনা Writing</span>
+              <span class="topic-tag">রচনা Writing</span><span class="topic-tag">চিঠি / আবেদনপত্র</span>
+              <span class="topic-tag">অনুবাদ Translation</span>
             </div>
           </div>
           <div class="domain-card" data-domain="social" onclick="selectDomain('sft', 'social')">
@@ -482,7 +501,22 @@
             <div class="domain-topics">
               <span class="topic-tag">West Bengal Geography</span><span class="topic-tag">Bengali History</span>
               <span class="topic-tag">Indian History</span><span class="topic-tag">World History</span>
-              <span class="topic-tag">Civics</span>
+              <span class="topic-tag">Civics</span><span class="topic-tag">Economics</span>
+              <span class="topic-tag">Current Affairs</span>
+            </div>
+          </div>
+          <div class="domain-card" data-domain="ict" onclick="selectDomain('sft', 'ict')">
+            <div class="domain-header"><span class="domain-emoji">🖥️</span><span class="domain-name">ICT / Computer Science</span></div>
+            <div class="domain-topics">
+              <span class="topic-tag">Digital Literacy</span><span class="topic-tag">Programming</span>
+              <span class="topic-tag">Data Structures</span><span class="topic-tag">Cyber Safety</span>
+            </div>
+          </div>
+          <div class="domain-card" data-domain="reasoning" onclick="selectDomain('sft', 'reasoning')">
+            <div class="domain-header"><span class="domain-emoji">🧩</span><span class="domain-name">Reasoning &amp; Mental Ability</span></div>
+            <div class="domain-topics">
+              <span class="topic-tag">Logical Reasoning</span><span class="topic-tag">Number Series</span>
+              <span class="topic-tag">Verbal Reasoning</span><span class="topic-tag">Non-Verbal</span>
             </div>
           </div>
         </div>
@@ -512,7 +546,7 @@
           <div class="pipe-connector"></div>
           <div class="pipe-step" id="sft-ps-extract">
             <div class="pipe-dot"></div>
-            <div class="pipe-info"><span class="pipe-name" id="sft-ps-extract-name">Reading Content</span><span class="pipe-desc">Extracting Bengali text</span></div>
+            <div class="pipe-info"><span class="pipe-name" id="sft-ps-extract-name">Reading Content</span><span class="pipe-desc">Extracting text</span></div>
             <span class="pipe-state">—</span>
           </div>
           <div class="pipe-connector"></div>
@@ -602,25 +636,27 @@
           <div class="domain-card" data-domain="math" onclick="selectDomain('dpo', 'math')">
             <div class="domain-header"><span class="domain-emoji">📐</span><span class="domain-name">Mathematics</span></div>
             <div class="domain-topics">
-              <span class="topic-tag">Arithmetic (Class 1-12)</span><span class="topic-tag">Algebra</span>
-              <span class="topic-tag">Geometry</span><span class="topic-tag">Statistics</span>
-              <span class="topic-tag">Word Problems (Tk/₹)</span>
+              <span class="topic-tag">Arithmetic</span><span class="topic-tag">Algebra</span>
+              <span class="topic-tag">Geometry</span><span class="topic-tag">Trigonometry</span>
+              <span class="topic-tag">Statistics</span><span class="topic-tag">Calculus</span>
+              <span class="topic-tag">Set Theory</span><span class="topic-tag">Word Problems (Tk/₹)</span>
             </div>
           </div>
           <div class="domain-card" data-domain="science" onclick="selectDomain('dpo', 'science')">
             <div class="domain-header"><span class="domain-emoji">🔬</span><span class="domain-name">Science</span></div>
             <div class="domain-topics">
               <span class="topic-tag">Physics</span><span class="topic-tag">Chemistry</span>
-              <span class="topic-tag">Biology</span><span class="topic-tag">Periodic Table</span>
-              <span class="topic-tag">Ecosystems</span>
+              <span class="topic-tag">Biology</span><span class="topic-tag">Env Science</span>
+              <span class="topic-tag">Astronomy</span>
             </div>
           </div>
           <div class="domain-card" data-domain="bengali_lang" onclick="selectDomain('dpo', 'bengali_lang')">
-            <div class="domain-header"><span class="domain-emoji">📖</span><span class="domain-name">Bengali Language & Literature</span></div>
+            <div class="domain-header"><span class="domain-emoji">📖</span><span class="domain-name">Bengali Language &amp; Literature</span></div>
             <div class="domain-topics">
               <span class="topic-tag">ব্যাকরণ (Grammar)</span><span class="topic-tag">সন্ধি · সমাস</span>
               <span class="topic-tag">Comprehension</span><span class="topic-tag">Tagore · Nazrul</span>
-              <span class="topic-tag">রচনা Writing</span>
+              <span class="topic-tag">রচনা Writing</span><span class="topic-tag">চিঠি / আবেদনপত্র</span>
+              <span class="topic-tag">অনুবাদ Translation</span>
             </div>
           </div>
           <div class="domain-card" data-domain="social" onclick="selectDomain('dpo', 'social')">
@@ -628,7 +664,22 @@
             <div class="domain-topics">
               <span class="topic-tag">West Bengal Geography</span><span class="topic-tag">Bengali History</span>
               <span class="topic-tag">Indian History</span><span class="topic-tag">World History</span>
-              <span class="topic-tag">Civics</span>
+              <span class="topic-tag">Civics</span><span class="topic-tag">Economics</span>
+              <span class="topic-tag">Current Affairs</span>
+            </div>
+          </div>
+          <div class="domain-card" data-domain="ict" onclick="selectDomain('dpo', 'ict')">
+            <div class="domain-header"><span class="domain-emoji">🖥️</span><span class="domain-name">ICT / Computer Science</span></div>
+            <div class="domain-topics">
+              <span class="topic-tag">Digital Literacy</span><span class="topic-tag">Programming</span>
+              <span class="topic-tag">Data Structures</span><span class="topic-tag">Cyber Safety</span>
+            </div>
+          </div>
+          <div class="domain-card" data-domain="reasoning" onclick="selectDomain('dpo', 'reasoning')">
+            <div class="domain-header"><span class="domain-emoji">🧩</span><span class="domain-name">Reasoning &amp; Mental Ability</span></div>
+            <div class="domain-topics">
+              <span class="topic-tag">Logical Reasoning</span><span class="topic-tag">Number Series</span>
+              <span class="topic-tag">Verbal Reasoning</span><span class="topic-tag">Non-Verbal</span>
             </div>
           </div>
         </div>
@@ -742,12 +793,12 @@
           <option value="gpt-5.4-nano">gpt-5.4-nano</option>
         </select>
         <label for="cpt-pairs-count">Target Pairs / Chunks (Max 100)</label>
-        <input type="number" id="cpt-pairs-count" class="modal-input" value="100" min="10" max="100" step="10" />
+        <input type="number" id="cpt-pairs-count" class="modal-input" value="50" min="10" max="100" step="10" />
         <p class="hint">CPT data is raw text — maximum 100 chunks per generation</p>
         <label for="cpt-reasoning">Reasoning Effort</label>
         <select id="cpt-reasoning" class="modal-select">
           <option value="none">None</option>
-          <option value="low">Low</option>
+          <option value="low" selected>Low</option>
           <option value="medium">Medium</option>
           <option value="high">High</option>
         </select>
@@ -779,12 +830,12 @@
           <option value="gpt-5.4-nano">gpt-5.4-nano</option>
         </select>
         <label for="sft-pairs-count">Target Instruction Pairs (Max 100)</label>
-        <input type="number" id="sft-pairs-count" class="modal-input" value="100" min="10" max="100" step="10" />
+        <input type="number" id="sft-pairs-count" class="modal-input" value="50" min="10" max="100" step="10" />
         <p class="hint">Maximum 100 pairs per generation</p>
         <label for="sft-reasoning">Reasoning Effort</label>
         <select id="sft-reasoning" class="modal-select">
           <option value="none">None</option>
-          <option value="low">Low</option>
+          <option value="low" selected>Low</option>
           <option value="medium">Medium</option>
           <option value="high">High</option>
         </select>
@@ -821,7 +872,7 @@
         <label for="dpo-reasoning">Reasoning Effort</label>
         <select id="dpo-reasoning" class="modal-select">
           <option value="none">None</option>
-          <option value="low">Low</option>
+          <option value="low" selected>Low</option>
           <option value="medium">Medium</option>
           <option value="high">High</option>
         </select>

@@ -38,55 +38,114 @@ class Config:
     REASONING_EFFORT = "low"
 
     # ── Default target pairs per mode ─────────────────────────────────────────
-    DEFAULT_PAIRS = {"cpt": 500, "sft": 200, "dpo": 100}
+    DEFAULT_PAIRS = {"cpt": 50, "sft": 50, "dpo": 50}
 
     # ── SFT Default Prompts ───────────────────────────────────────────────────
     SFT_SYSTEM_PROMPT = (
-        "You are an expert AI dataset creator and curriculum designer specialising in the Bengali language. "
-        "Your task is to generate high-quality Supervised Fine-Tuning (SFT) data to train a Qwen 2.5 3B model "
-        "to act as an advanced Bengali AI Tutor. The model should learn to be pedagogical, patient, and culturally "
-        "aligned with Bengali students."
+        "You are an expert AI dataset creator building Supervised Fine-Tuning (SFT) data "
+        "for a Bengali AI Tutor. The tutor must become pedagogically excellent, patient, "
+        "and culturally aligned with Bengali students (Class 6–12, West Bengal & Bangladesh curricula).\n\n"
+        "Data Quality Standards:\n"
+        "• Generate instruction-input-output triples following the Alpaca schema.\n"
+        "• The 'output' field MUST demonstrate expert-level Chain-of-Thought (CoT) reasoning — "
+        "show step-by-step thinking, not just final answers.\n"
+        "• Ensure maximum diversity in task types: conceptual explanation, problem solving, "
+        "step-by-step derivation, multiple-choice with reasoning, summarization, comparison, "
+        "error correction, translation, creative writing, and real-world application.\n"
+        "• Use authentic Bengali throughout with culturally appropriate examples "
+        "(local names, ₹/৳ prices, NCTB/WBBSE references).\n"
+        "• Vary difficulty from basic (Class 6) to advanced (Class 12 / competitive exam level).\n\n"
+        "CROSS-LINGUAL REQUIREMENT: At least 5% of ALL generated items MUST have the "
+        "'instruction' written in English while the 'output' is entirely in Bengali. "
+        "This teaches the model to understand English queries and respond fluently in Bengali — "
+        "a critical real-world capability for Bengali students who often ask questions in English."
     )
     SFT_HUMAN_PROMPT = (
-        "Based on the provided context, generate a diverse set of instruction-input-output pairs in authentic Bengali. "
-        "Follow this strict schema:\n"
-        "- instruction: The core task or question.\n"
-        "- input: Additional context for the task (leave empty/blank if the instruction is self-sufficient).\n"
-        "- output: The detailed, accurate, and pedagogically sound tutor response.\n\n"
-        "Ensure maximum diversity in tasks (e.g., conceptual explanation, problem solving, multiple-choice, summarization). "
-        "Focus heavily on Chain-of-Thought (CoT) reasoning in the output to teach the 3B model how to step through problems.\n\n"
+        "Based on the provided context, generate a diverse set of instruction-input-output triples:\n"
+        "- instruction: The core task or question (primarily Bengali; at least 5% MUST be in English).\n"
+        "- input: Additional context for the task (leave blank if instruction is self-sufficient).\n"
+        "- output: Detailed Bengali response with clear Chain-of-Thought reasoning.\n\n"
+        "Task Diversity (cover as many as possible):\n"
+        "• Conceptual explanation ('এটা কী?', 'ব্যাখ্যা করো')\n"
+        "• Problem solving with step-by-step working\n"
+        "• Multiple-choice with elimination reasoning\n"
+        "• Summarization of passages or concepts\n"
+        "• Compare & contrast between related concepts\n"
+        "• Error identification & correction\n"
+        "• Real-world application problems (Bengali context)\n"
+        "• English→Bengali cross-lingual Q&A (minimum 5%)\n\n"
+        "For cross-lingual items, write the instruction in natural English "
+        "(e.g., 'Explain photosynthesis in Bengali with examples') and provide "
+        "the full response in Bengali.\n\n"
         "Context:\n{context}"
     )
 
     # ── CPT Default Prompts ───────────────────────────────────────────────────
     CPT_SYSTEM_PROMPT = (
-        "You are an expert Bengali corpus builder specialising in educational content for the Qwen 2.5 3B model. "
-        "Your task is to generate fluent, natural Bengali raw text chunks for Continued Pre-Training (CPT). "
-        "The text must be factually accurate, culturally appropriate, and written entirely in authentic Bengali (বাংলা). "
-        "Avoid mixing English unnecessarily."
+        "You are an expert Bengali language corpus architect. Your task is to generate "
+        "high-quality, natural Bengali (বাংলা) raw text passages for Continued Pre-Training (CPT) "
+        "of a language model that will serve as a Bengali AI tutor.\n\n"
+        "Quality Standards:\n"
+        "• Write entirely in authentic, fluent Bengali — avoid unnecessary English mixing "
+        "unless it is natural in the educational context (e.g., technical terms like 'DNA', 'algorithm').\n"
+        "• Content must be factually accurate, well-structured, and pedagogically sound.\n"
+        "• Use diverse writing styles: expository, narrative, dialogic (teacher-student conversation), "
+        "and analytical.\n"
+        "• Target Class 6–12 students across West Bengal and Bangladesh curricula.\n"
+        "• Include culturally grounded examples: local names, prices in ₹/৳, Bengali festivals, "
+        "geography, and historical references.\n"
+        "• Vary sentence length and complexity — mix simple explanations with advanced academic prose."
     )
     CPT_HUMAN_PROMPT = (
-        "Generate rich, diverse Bengali raw text passages based on the provided context or domain. "
-        "The text should feel like it comes from authentic Bengali educational resources — textbooks, "
-        "encyclopaedias, or well-written articles. Cover the topic comprehensively. "
-        "Vary sentence structure and vocabulary. Write in a clear, educational register suitable for secondary students. "
-        "Output only Bengali text, no meta-commentary.\n\nContext:\n{context}"
+        "Generate rich, diverse Bengali raw text passages based on the provided context. "
+        "Each passage should feel like it comes from an authentic Bengali educational resource — "
+        "a textbook chapter, encyclopedia entry, well-written magazine article, or a teacher's "
+        "detailed explanation.\n\n"
+        "Requirements:\n"
+        "1. Cover the topic comprehensively with depth and accuracy.\n"
+        "2. Use varied registers: some passages formal/academic, others conversational/explanatory.\n"
+        "3. Include specific examples, numbers, and facts grounded in Bengali/South Asian context.\n"
+        "4. Naturally integrate subject-specific terminology (transliterated English terms are "
+        "acceptable where standard in Bengali education).\n"
+        "5. Output only Bengali text — no meta-commentary, headers, or labels.\n\n"
+        "Context:\n{context}"
     )
 
     # ── DPO Default Prompts ───────────────────────────────────────────────────
     DPO_SYSTEM_PROMPT = (
-        "You are an expert in Bengali educational AI alignment. Your task is to generate DPO "
-        "(Direct Preference Optimization) training triples for a Bengali AI Tutor — Qwen 2.5 3B. "
-        "Each triple must contain: (1) a Bengali student prompt, (2) a CHOSEN response that is pedagogically "
-        "excellent, accurate, and fluent in Bengali, and (3) a REJECTED response that has clear flaws — "
-        "bad teaching style, factual errors, or poor Bengali."
+        "You are an expert in AI alignment for Bengali education. Your task is to generate "
+        "DPO (Direct Preference Optimization) training triples for a Bengali AI Tutor. "
+        "Each triple trains the model to prefer high-quality responses over flawed ones.\n\n"
+        "Triple Structure:\n"
+        "• prompt: A student question or task (at least 5% MUST be in English for cross-lingual training).\n"
+        "• chosen: The ideal tutor response — pedagogically excellent, accurate, fluent Bengali, "
+        "encouraging tone, step-by-step reasoning, culturally appropriate examples.\n"
+        "• rejected: A plausibly written but clearly inferior response with specific flaws.\n\n"
+        "Rejection Flaws (vary across these categories):\n"
+        "1. Pedagogical: Skips steps, gives answer without explanation, condescending tone.\n"
+        "2. Factual: Contains incorrect facts, wrong formulas, misleading information.\n"
+        "3. Linguistic: Poor Bengali grammar, excessive English mixing, unnatural phrasing.\n"
+        "4. Structural: Disorganized, no clear reasoning flow, missing key steps, too brief.\n\n"
+        "CROSS-LINGUAL REQUIREMENT: At least 5% of ALL generated triples MUST have the "
+        "'prompt' in English, with both 'chosen' and 'rejected' responses in Bengali.\n\n"
+        "Quality Standard: The difference between chosen and rejected must be clear and "
+        "educational — a human annotator should immediately see why 'chosen' is better."
     )
     DPO_HUMAN_PROMPT = (
-        "Generate DPO preference triples in Bengali for the specified domain. "
-        "The chosen response should exemplify an ideal Bengali tutor: clear explanation, step-by-step reasoning, "
-        "culturally appropriate examples, encouraging tone. "
-        "The rejected response should be plausibly wrong but noticeably inferior. "
-        "Ensure diversity across question types and difficulty levels.\n\nContext:\n{context}"
+        "Generate DPO preference triples for the specified domain:\n"
+        "- prompt: A student question (primarily Bengali; at least 5% in English)\n"
+        "- chosen: The ideal Bengali tutor response with clear reasoning and step-by-step explanation\n"
+        "- rejected: A plausibly written but flawed Bengali response\n\n"
+        "Ensure diversity across:\n"
+        "• Question types (conceptual, computational, analytical, creative)\n"
+        "• Difficulty levels (basic to advanced)\n"
+        "• Rejection strategies (pedagogical flaws, factual errors, poor Bengali, structural problems)\n"
+        "• Cross-lingual items (English prompt → Bengali responses, minimum 5%)\n\n"
+        "For cross-lingual triples, write the prompt in natural English "
+        "(e.g., 'Can you explain the water cycle?') and provide both chosen and rejected in Bengali.\n\n"
+        "The chosen response should exemplify an ideal Bengali tutor with step-by-step reasoning. "
+        "The rejected response should be noticeably inferior but not obviously garbage.\n\n"
+        "Context:\n{context}"
     )
 
     # ── Backward-compat alias ─────────────────────────────────────────────────
@@ -99,6 +158,8 @@ class Config:
         "science":      "Science",
         "bengali_lang": "Bengali Language & Literature",
         "social":       "Social Studies / Geography",
+        "ict":          "ICT / Computer Science",
+        "reasoning":    "Reasoning & Mental Ability",
     }
 
     SUBDOMAIN_LABELS = {
@@ -106,22 +167,44 @@ class Config:
         "arithmetic":   "Arithmetic (Class 1–12)",
         "algebra":      "Algebra — equations, polynomials",
         "geometry":     "Geometry — proofs, mensuration",
-        "statistics":   "Statistics — mean, median, mode",
+        "trigonometry":  "Trigonometry — ratios, identities, heights & distances",
+        "statistics":   "Statistics — mean, median, mode, probability",
+        "calculus":     "Calculus — differentiation, integration (Class 11–12)",
+        "set_theory":   "Set Theory — sets, Venn diagrams, relations",
+        "number_theory": "Number Theory — primes, HCF, LCM, divisibility",
         "word_probs":   "Word Problems (Bengali context — Tk/₹, local names)",
         # Science
         "physics":      "Physics — motion, force, light, electricity",
         "chemistry":    "Chemistry — elements, reactions, periodic table",
         "biology":      "Biology — cells, human body, plants, ecosystems",
+        "env_science":  "Environmental Science — pollution, conservation, climate",
+        "astronomy":    "Astronomy — solar system, stars, space science",
         # Bengali Language
         "grammar":      "Bengali Grammar (ব্যাকরণ) — সন্ধি, সমাস, কারক, বিভক্তি",
         "comprehension":"Comprehension passages",
-        "essay":        "Essay writing (রচনা)",
+        "essay":        "Essay writing (রচনা / প্রবন্ধ)",
         "literature":   "Poem/Prose explanation (Tagore, Nazrul, Sukumar Ray)",
+        "letter":       "Letter & Application writing (চিঠি / আবেদনপত্র)",
+        "translation":  "Translation (অনুবাদ) — English ↔ Bengali",
+        "report":       "Report & Dialogue writing (প্রতিবেদন / সংলাপ)",
         # Social Studies
         "geo_wb":       "Geography — West Bengal & World",
         "history_bn":   "Bengali History and Indian History",
         "world_hist":   "World History",
         "civics":       "Civics — Government structure",
+        "economics":    "Basic Economics — demand, supply, banking, Indian economy",
+        "current_affairs": "Current Affairs — Bengal & India",
+        "env_studies":  "Environmental Studies — sustainability, ecology, SDGs",
+        # ICT / Computer Science
+        "digital_lit":  "Digital Literacy — internet, email, office tools",
+        "programming":  "Programming Basics — algorithms, flowcharts, Python",
+        "data_struct":  "Data Structures — arrays, lists, sorting",
+        "networking":   "Networking & Cyber Safety — protocols, online safety",
+        # Reasoning & Mental Ability
+        "logical":      "Logical Reasoning — syllogisms, Venn diagrams, puzzles",
+        "number_series":"Number & Pattern Series — sequences, analogies",
+        "verbal":       "Verbal Reasoning — coding-decoding, blood relations",
+        "non_verbal":   "Non-Verbal Reasoning — figure completion, mirror image",
     }
 
     # ── Node labels shown on the frontend pipeline ────────────────────────────

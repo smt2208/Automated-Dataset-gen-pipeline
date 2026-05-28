@@ -1,4 +1,5 @@
 import os
+import gc
 from fastapi import FastAPI, HTTPException, UploadFile, File, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -135,7 +136,7 @@ async def ws_process(websocket: WebSocket):
         "target_pairs":  200,
 
         // domain mode only:
-        "domain":      "math" | "science" | "bengali_lang" | "social",
+        "domain":      "math" | "science" | "bengali_lang" | "social" | "ict" | "reasoning",
         "subdomains":  ["arithmetic", "algebra", ...]
     }
 
@@ -256,6 +257,10 @@ async def ws_process(websocket: WebSocket):
         })
 
         await websocket.close()
+
+        # Free pipeline state memory
+        del accumulated, state
+        gc.collect()
 
     except WebSocketDisconnect:
         pass
