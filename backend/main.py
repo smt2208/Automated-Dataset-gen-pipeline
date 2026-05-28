@@ -8,9 +8,9 @@ from graph import dataset_pipeline
 from state import GraphState
 from config import config
 
-app = FastAPI(title="Bengali Dataset Creation Pipeline")
+app = FastAPI(title="Bengali AI Tutor — Dataset Generation Pipeline")
 
-# ── CORS ─────────────────────────────────────────────────────────────────────
+# ── CORS ───────────────────────────────────────────────────────────────────────
 app.add_middleware(
     CORSMiddleware,
     allow_origins=config.CORS_ORIGINS,
@@ -23,21 +23,37 @@ os.makedirs(config.UPLOADS_DIR, exist_ok=True)
 os.makedirs(config.OUTPUTS_DIR, exist_ok=True)
 
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
+# ── Helpers ────────────────────────────────────────────────────────────────────
 
 class UrlRequest(BaseModel):
     url: str
 
-def _initial_state(input_type: str, input_source: str, sys=None, hum=None, model=None) -> GraphState:
+
+def _initial_state(
+    input_type:    str,
+    input_source:  str | None,
+    sys:           str  | None = None,
+    hum:           str  | None = None,
+    model:         str  | None = None,
+    target_pairs:  int  | None = None,
+    pipeline_mode: str  | None = "sft",
+    domain:        str  | None = None,
+    subdomains:    list | None = None,
+) -> GraphState:
     return {
         "input_type":    input_type,
         "input_source":  input_source,
+        "pipeline_mode": pipeline_mode or "sft",
         "system_prompt": sys,
         "human_prompt":  hum,
         "model":         model,
+        "target_pairs":  target_pairs or config.DEFAULT_PAIRS.get(pipeline_mode or "sft", 200),
+        "domain":        domain,
+        "subdomains":    subdomains or [],
         "raw_documents": [],
         "cleaned_texts": [],
         "qa_pairs":      [],
+        "dpo_triples":   [],
         "errors":        [],
         "output_file":   "",
         "hf_file":       "",
@@ -45,34 +61,46 @@ def _initial_state(input_type: str, input_source: str, sys=None, hum=None, model
         "excel_file":    "",
     }
 
+
 def _file_basenames(state: dict) -> dict:
     return {
-        "jsonl":   os.path.basename(state.get("output_file", "")),
-        "hf":      os.path.basename(state.get("hf_file", "")),
+        "jsonl":   os.path.basename(state.get("output_file",  "")),
+        "hf":      os.path.basename(state.get("hf_file",      "")),
         "unsloth": os.path.basename(state.get("unsloth_file", "")),
-        "excel":   os.path.basename(state.get("excel_file", "")),
+        "excel":   os.path.basename(state.get("excel_file",   "")),
     }
 
 
-# ── Upload endpoint (called BEFORE opening WebSocket for file inputs) ─────────
+def _result_count(state: dict, mode: str) -> int:
+    """Return the number of generated items, depending on pipeline mode."""
+    if mode == "dpo":
+        return len(state.get("dpo_triples", []))
+    return len(state.get("qa_pairs", []))
+
+
+# ── File Upload ────────────────────────────────────────────────────────────────
 
 @app.post("/upload")
 async def upload_file(file: UploadFile = File(...)):
     """
-    Upload a PDF or image and return the server-side path + detected input_type.
-    The frontend should then open a WebSocket and send this file_path as input_source.
+    Upload a file and return the server-side path + detected input_type.
+    The frontend then opens a WebSocket and sends this file_path as input_source.
     """
     ext = os.path.splitext(file.filename or "")[1].lower()
-    if ext == ".pdf":
-        input_type = "pdf"
-    elif ext in (".png", ".jpg", ".jpeg"):
-        input_type = "image"
-    elif ext == ".txt":
-        input_type = "text"
-    else:
+    ext_map = {
+        ".pdf":  "pdf",
+        ".docx": "docx",
+        ".doc":  "docx",
+        ".txt":  "text",
+        ".png":  "image",
+        ".jpg":  "image",
+        ".jpeg": "image",
+    }
+    input_type = ext_map.get(ext)
+    if not input_type:
         raise HTTPException(
             status_code=400,
-            detail="Unsupported format. Upload a PDF, image (PNG/JPG), or text (.txt) file."
+            detail="Unsupported format. Upload a PDF, DOCX, image (PNG/JPG), or text (.txt) file."
         )
     file_path = os.path.join(config.UPLOADS_DIR, file.filename)
     with open(file_path, "wb") as f:
@@ -80,38 +108,71 @@ async def upload_file(file: UploadFile = File(...)):
     return {"file_path": file_path, "input_type": input_type}
 
 
-# ── WebSocket streaming endpoint ─────────────────────────────────────────────
+# ── WebSocket streaming endpoint ───────────────────────────────────────────────
 
 @app.websocket("/ws/process")
 async def ws_process(websocket: WebSocket):
     """
     Real-time pipeline execution over WebSocket.
 
-    Client sends one JSON message to kick off the pipeline:
-        { "input_type": "url"|"pdf"|"image",  "input_source": "<url or file_path>" }
+    Client sends ONE JSON message to kick off the pipeline:
+    {
+        "input_type":    "url" | "pdf" | "docx" | "image" | "text" | "domain",
+        "input_source":  "<url or server file path>",   # null for domain mode
+        "pipeline_mode": "cpt" | "sft" | "dpo",
+        "system_prompt": "...",
+        "human_prompt":  "...",
+        "model":         "gpt-5.4-mini",
+        "target_pairs":  200,
 
-    Server streams JSON messages for every LangGraph node:
+        // domain mode only:
+        "domain":      "math" | "science" | "bengali_lang" | "social",
+        "subdomains":  ["arithmetic", "algebra", ...]
+    }
+
+    Server streams JSON events per LangGraph node:
         { "type": "node_start", "node": "<name>", "label": "<human label>" }
         { "type": "node_done",  "node": "<name>" }
         { "type": "node_error", "node": "<name>", "message": "<error>" }
-        { "type": "error",      "message": "<error>" }          ← fatal, stream ends
+        { "type": "error",      "message": "<fatal error>" }
         { "type": "completed",  "pairs": <int>, "files": { jsonl, hf, unsloth, excel } }
     """
     await websocket.accept()
     try:
-        # 1. Receive kick-off message
         data = await websocket.receive_json()
-        input_type   = data.get("input_type")
-        input_source = data.get("input_source")
-        sys_prompt   = data.get("system_prompt")
-        hum_prompt   = data.get("human_prompt")
-        custom_model = data.get("model")
 
-        if not input_type or not input_source:
-            await websocket.send_json({"type": "error", "message": "Missing input_type or input_source."})
+        input_type    = data.get("input_type")
+        input_source  = data.get("input_source")
+        pipeline_mode = data.get("pipeline_mode") or "sft"
+        sys_prompt    = data.get("system_prompt")
+        hum_prompt    = data.get("human_prompt")
+        custom_model  = data.get("model")
+        target_pairs  = data.get("target_pairs")
+        domain        = data.get("domain")
+        subdomains    = data.get("subdomains") or []
+
+        # ── Validation ────────────────────────────────────────────────────────
+        if not input_type:
+            await websocket.send_json({"type": "error", "message": "Missing input_type."})
             return
 
-        # 2. Guard: check required API keys
+        if input_type == "domain":
+            if not domain:
+                await websocket.send_json({"type": "error", "message": "Domain mode requires a 'domain' field."})
+                return
+            if not subdomains:
+                await websocket.send_json({"type": "error", "message": "Domain mode requires at least one subdomain."})
+                return
+        else:
+            if not input_source:
+                await websocket.send_json({"type": "error", "message": "Missing input_source."})
+                return
+
+        if pipeline_mode not in ("cpt", "sft", "dpo"):
+            await websocket.send_json({"type": "error", "message": f"Invalid pipeline_mode: '{pipeline_mode}'. Use 'cpt', 'sft', or 'dpo'."})
+            return
+
+        # ── API key guards ────────────────────────────────────────────────────
         if input_type == "url" and not config.APIFY_API_TOKEN:
             await websocket.send_json({"type": "error", "message": "APIFY_API_TOKEN is not configured in .env"})
             return
@@ -119,16 +180,27 @@ async def ws_process(websocket: WebSocket):
             await websocket.send_json({"type": "error", "message": "OPENAI_API_KEY is not configured in .env"})
             return
 
-        state = _initial_state(input_type, input_source, sys=sys_prompt, hum=hum_prompt, model=custom_model)
+        # ── Build initial state ────────────────────────────────────────────────
+        state = _initial_state(
+            input_type    = input_type,
+            input_source  = input_source,
+            sys           = sys_prompt,
+            hum           = hum_prompt,
+            model         = custom_model,
+            target_pairs  = int(target_pairs) if target_pairs else None,
+            pipeline_mode = pipeline_mode,
+            domain        = domain,
+            subdomains    = subdomains,
+        )
+
         accumulated: dict = {}
         fatal_error = False
 
-        # 3. Stream LangGraph events node-by-node
+        # ── Stream LangGraph events ────────────────────────────────────────────
         async for event in dataset_pipeline.astream_events(state, version="v2"):
             kind = event["event"]
             name = event.get("name", "")
 
-            # Only care about our own registered nodes
             if name not in config.KNOWN_NODES:
                 continue
 
@@ -145,10 +217,9 @@ async def ws_process(websocket: WebSocket):
                     accumulated.update(output)
 
                     if output.get("errors"):
-                        # A node returned errors — report and stop
                         err_msg = output["errors"][-1]
                         await websocket.send_json({"type": "node_error", "node": name, "message": err_msg})
-                        await websocket.send_json({"type": "error", "message": err_msg})
+                        await websocket.send_json({"type": "error",      "message": err_msg})
                         fatal_error = True
                         break
 
@@ -161,7 +232,7 @@ async def ws_process(websocket: WebSocket):
         if fatal_error:
             return
 
-        # 4. All nodes done — send completion summary
+        # ── Send completion summary ────────────────────────────────────────────
         errors = accumulated.get("errors", [])
         if errors:
             await websocket.send_json({"type": "error", "message": errors[-1]})
@@ -169,15 +240,14 @@ async def ws_process(websocket: WebSocket):
 
         await websocket.send_json({
             "type":  "completed",
-            "pairs": len(accumulated.get("qa_pairs", [])),
+            "pairs": _result_count(accumulated, pipeline_mode),
             "files": _file_basenames(accumulated),
         })
-        
-        # Explicitly close so the client UI unlocks immediately
+
         await websocket.close()
 
     except WebSocketDisconnect:
-        pass  # client closed the connection cleanly
+        pass
     except Exception as e:
         try:
             await websocket.send_json({"type": "error", "message": str(e)})
@@ -186,15 +256,11 @@ async def ws_process(websocket: WebSocket):
             pass
 
 
-# ── Download endpoint ─────────────────────────────────────────────────────────
+# ── Download endpoint ──────────────────────────────────────────────────────────
 
 @app.get("/download/{filename}")
 async def download_file(filename: str):
-    """
-    Serve any generated dataset file from the outputs directory.
-    Supports .jsonl and .xlsx.
-    """
-    # Security: prevent directory traversal
+    """Serve a generated dataset file from the outputs directory."""
     safe_name = os.path.basename(filename)
     file_path = os.path.join(config.OUTPUTS_DIR, safe_name)
 
@@ -209,7 +275,7 @@ async def download_file(filename: str):
     return FileResponse(file_path, media_type=media_type, filename=safe_name)
 
 
-# ── Legacy HTTP endpoints (kept for Swagger /docs testing) ───────────────────
+# ── Legacy HTTP endpoints (kept for Swagger /docs testing) ────────────────────
 
 @app.post("/process/url", summary="[Swagger] Sync URL pipeline")
 async def process_url(body: UrlRequest):
@@ -217,7 +283,6 @@ async def process_url(body: UrlRequest):
         raise HTTPException(status_code=500, detail="APIFY_API_TOKEN not set.")
     if not config.OPENAI_API_KEY:
         raise HTTPException(status_code=500, detail="OPENAI_API_KEY not set.")
-
     final = dataset_pipeline.invoke(_initial_state("url", body.url))
     if final.get("errors"):
         return {"status": "error", "errors": final["errors"]}
@@ -228,28 +293,25 @@ async def process_url(body: UrlRequest):
 async def process_file(file: UploadFile = File(...)):
     if not config.OPENAI_API_KEY:
         raise HTTPException(status_code=500, detail="OPENAI_API_KEY not set.")
-
     ext = os.path.splitext(file.filename or "")[1].lower()
-    if ext == ".pdf":
-        input_type = "pdf"
-    elif ext in (".png", ".jpg", ".jpeg"):
-        input_type = "image"
-    else:
+    ext_map = {".pdf": "pdf", ".docx": "docx", ".doc": "docx",
+               ".txt": "text", ".png": "image", ".jpg": "image", ".jpeg": "image"}
+    input_type = ext_map.get(ext)
+    if not input_type:
         raise HTTPException(status_code=400, detail="Unsupported format.")
-
     file_path = os.path.join(config.UPLOADS_DIR, file.filename)
     with open(file_path, "wb") as f:
         f.write(await file.read())
-
     final = dataset_pipeline.invoke(_initial_state(input_type, file_path))
     if final.get("errors"):
         return {"status": "error", "errors": final["errors"]}
     return {"status": "success", "pairs": len(final.get("qa_pairs", [])), "files": _file_basenames(final)}
 
 
+# ── Frontend Static Files ──────────────────────────────────────────────────────
+
 from fastapi.staticfiles import StaticFiles
 
-# ── Frontend Static Files ────────────────────────────────────────────────────
 frontend_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "frontend")
 if os.path.exists(frontend_dir):
     app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="frontend")

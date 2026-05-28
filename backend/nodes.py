@@ -3,12 +3,18 @@ import re
 import json
 import uuid
 import pytesseract
-import fitz  # PyMuPDF — already a dependency
+import fitz  # PyMuPDF
 
 try:
     from PIL import Image
 except ImportError:
     pass
+
+try:
+    import docx as python_docx   # python-docx
+    DOCX_AVAILABLE = True
+except ImportError:
+    DOCX_AVAILABLE = False
 
 try:
     import openpyxl
@@ -22,15 +28,18 @@ from langchain_apify import ApifyWrapper
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Optional
 
 from state import GraphState
 from config import config
 
 
-# ── Pydantic schemas for structured LLM output ───────────────────────────────
+# ══════════════════════════════════════════════════════════════════════════════
+# Pydantic schemas for structured LLM output
+# ══════════════════════════════════════════════════════════════════════════════
 
 class QAPair(BaseModel):
+    """SFT instruction–response pair."""
     instruction: str = Field(description="The instruction or question in Bengali.")
     response:    str = Field(description="The detailed, accurate response in Bengali.")
 
@@ -38,19 +47,39 @@ class QAPairsList(BaseModel):
     pairs: List[QAPair] = Field(description="List of instruction-response pairs.")
 
 
-# ── Extraction nodes ──────────────────────────────────────────────────────────
+class CPTChunk(BaseModel):
+    """CPT raw Bengali text chunk."""
+    text: str = Field(description="A natural, fluent Bengali educational text passage.")
+
+class CPTChunksList(BaseModel):
+    chunks: List[CPTChunk] = Field(description="List of Bengali text chunks for pre-training.")
+
+
+class DPOTriple(BaseModel):
+    """DPO preference triple."""
+    prompt:   str = Field(description="The Bengali student question or prompt.")
+    chosen:   str = Field(description="The preferred, pedagogically excellent Bengali response.")
+    rejected: str = Field(description="The inferior, flawed Bengali response to be rejected.")
+
+class DPOTriplesList(BaseModel):
+    triples: List[DPOTriple] = Field(description="List of DPO preference triples.")
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# EXTRACTION NODES
+# ══════════════════════════════════════════════════════════════════════════════
 
 def scrape_node(state: GraphState) -> GraphState:
-    """Scrape ONLY the given URL — no embedded/linked pages."""
+    """Scrape the given URL using Apify."""
     url = state["input_source"]
     try:
         apify = ApifyWrapper()
         loader = apify.call_actor(
             actor_id=config.APIFY_ACTOR_ID,
             run_input={
-                "startUrls":    [{"url": url}],
-                "maxCrawlPages": config.APIFY_CRAWL_PAGES,   # 1 — only the given page
-                "maxCrawlDepth": config.APIFY_CRAWL_DEPTH,   # 0 — no following of links
+                "startUrls":     [{"url": url}],
+                "maxCrawlPages": config.APIFY_CRAWL_PAGES,
+                "maxCrawlDepth": config.APIFY_CRAWL_DEPTH,
             },
             dataset_mapping_function=lambda item: Document(
                 page_content=item.get("text") or "",
@@ -59,28 +88,23 @@ def scrape_node(state: GraphState) -> GraphState:
         )
         docs = loader.load()
         raw_text = [doc.page_content for doc in docs if doc.page_content.strip()]
+        if not raw_text:
+            return {"errors": ["Scraping returned no content from the URL."]}
         return {"raw_documents": raw_text}
     except Exception as e:
         return {"errors": [f"Scraping failed: {str(e)}"]}
 
-
-# ── OCR helper — retries with 'eng' if the primary language pack is missing ──
 
 def _safe_ocr(image, lang: str) -> str:
     """Run Tesseract OCR with graceful fallback to 'eng' if lang pack is missing."""
     try:
         return pytesseract.image_to_string(image, lang=lang)
     except pytesseract.TesseractError:
-        # Language pack not installed — fall back to English-only OCR
         return pytesseract.image_to_string(image, lang='eng')
 
 
-
 def pdf_node(state: GraphState) -> GraphState:
-    """Extract text from a PDF.
-    - If the PDF has a text layer → use PyMuPDF directly.
-    - If the page is blank (scanned/image-only) → auto-fall back to Tesseract OCR.
-    """
+    """Extract text from a PDF (text layer first, OCR fallback for scanned pages)."""
     file_path = state["input_source"]
     try:
         doc = fitz.open(file_path)
@@ -90,7 +114,6 @@ def pdf_node(state: GraphState) -> GraphState:
             if text:
                 raw_text.append(text)
             else:
-                # Page is an image — render and OCR it
                 pix = page.get_pixmap(dpi=200)
                 img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
                 ocr_text = _safe_ocr(img, config.TESSERACT_LANG).strip()
@@ -101,6 +124,33 @@ def pdf_node(state: GraphState) -> GraphState:
         return {"raw_documents": raw_text}
     except Exception as e:
         return {"errors": [f"PDF extraction failed: {str(e)}"]}
+
+
+def docx_node(state: GraphState) -> GraphState:
+    """Extract text from a .docx / .doc file using python-docx."""
+    file_path = state["input_source"]
+    if not DOCX_AVAILABLE:
+        return {"errors": ["python-docx is not installed. Run: pip install python-docx"]}
+    try:
+        document = python_docx.Document(file_path)
+        paragraphs = [p.text.strip() for p in document.paragraphs if p.text.strip()]
+        # Also grab text from tables
+        for table in document.tables:
+            for row in table.rows:
+                for cell in row.cells:
+                    if cell.text.strip():
+                        paragraphs.append(cell.text.strip())
+        if not paragraphs:
+            return {"errors": ["DOCX file is empty or has no readable text."]}
+        # Group paragraphs into chunks of ~10 for better LLM context
+        chunk_size = 10
+        chunks = [
+            "\n".join(paragraphs[i:i + chunk_size])
+            for i in range(0, len(paragraphs), chunk_size)
+        ]
+        return {"raw_documents": chunks}
+    except Exception as e:
+        return {"errors": [f"DOCX extraction failed: {str(e)}"]}
 
 
 def text_node(state: GraphState) -> GraphState:
@@ -117,7 +167,7 @@ def text_node(state: GraphState) -> GraphState:
 
 
 def ocr_node(state: GraphState) -> GraphState:
-    """Extract text from a scanned image using Tesseract OCR (multilingual with auto-fallback)."""
+    """Extract text from a scanned image using Tesseract OCR."""
     file_path = state["input_source"]
     try:
         image = Image.open(file_path)
@@ -128,33 +178,108 @@ def ocr_node(state: GraphState) -> GraphState:
     except Exception as e:
         return {"errors": [f"OCR failed: {str(e)}"]}
 
-# ── LLM-ready preprocessing (LangChain document transformer) ─────────────────
+
+def domain_node(state: GraphState) -> GraphState:
+    """
+    Build a rich structured context prompt from the selected domain + subdomains.
+    This node generates no external content — it constructs a detailed Bengali
+    educational brief that becomes the 'context' for the LLM generation node.
+    """
+    domain     = state.get("domain", "")
+    subdomains = state.get("subdomains") or []
+    mode       = state.get("pipeline_mode", "sft")
+
+    domain_label = config.DOMAIN_LABELS.get(domain, domain.title())
+    subdomain_labels = [
+        config.SUBDOMAIN_LABELS.get(s, s) for s in subdomains
+    ]
+
+    mode_descriptions = {
+        "cpt": "raw Bengali educational text for language model pre-training",
+        "sft": "instruction-response pairs for an AI Bengali tutor",
+        "dpo": "DPO preference triples (chosen vs rejected Bengali tutor responses)",
+    }
+    mode_desc = mode_descriptions.get(mode, "Bengali educational content")
+
+    # Build a rich structured brief as the "source document"
+    context_parts = [
+        f"Domain: {domain_label}",
+        f"Target output: {mode_desc}",
+        "",
+        "Sub-topics to cover:",
+    ]
+    for label in subdomain_labels:
+        context_parts.append(f"  • {label}")
+
+    context_parts += [
+        "",
+        "Guidelines:",
+        "  • Use authentic Bengali language throughout.",
+        "  • Content must be appropriate for Class 6–12 Bengali students.",
+        "  • Use local Bengali context (West Bengal / Bangladesh): prices in Tk/₹, local names, local examples.",
+        "  • Cover each sub-topic with sufficient depth.",
+        "  • Vary difficulty from basic to advanced within each sub-topic.",
+    ]
+
+    if domain == "math":
+        context_parts += [
+            "  • For mathematics: show step-by-step working in Bengali.",
+            "  • Include word problems with Bengali-context numbers (e.g., মূল্য ৳৫০, দূরত্ব ১২ কিমি).",
+        ]
+    elif domain == "science":
+        context_parts += [
+            "  • For science: explain concepts clearly with real-world Bengali examples.",
+            "  • Reference NCTB (জাতীয় শিক্ষাক্রম ও পাঠ্যপুস্তক বোর্ড) curriculum level.",
+        ]
+    elif domain == "bengali_lang":
+        context_parts += [
+            "  • For Bengali language: use authentic literary sources (Tagore, Nazrul, Sukumar Ray).",
+            "  • Grammar examples must use correct বাংলা terminology.",
+        ]
+    elif domain == "social":
+        context_parts += [
+            "  • For social studies: include specific facts about West Bengal, Bangladesh, and Indian history.",
+            "  • Reference key historical events, geographical features, and government structures.",
+        ]
+
+    context = "\n".join(context_parts)
+    return {"raw_documents": [context]}
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# CLEANING NODE
+# ══════════════════════════════════════════════════════════════════════════════
 
 def clean_node(state: GraphState) -> GraphState:
     """
-    Make extracted text LLM-ready using LangChain's Html2TextTransformer:
-      - Strips residual HTML tags / markdown artefacts from web-scraped content
-      - Normalises whitespace and removes very short fragments
-    The use of LangChain Document objects keeps this step in the LC ecosystem.
+    Make extracted text LLM-ready.
+    - For web-scraped content: use Html2TextTransformer to strip HTML artefacts.
+    - For PDF/DOCX/domain content: light whitespace normalization only.
     """
     raw_docs = state.get("raw_documents", [])
     if not raw_docs:
         return {"errors": ["No content extracted from the source."]}
 
-    # Wrap in LangChain Document objects for the transformer
-    docs = [Document(page_content=t) for t in raw_docs if t.strip()]
-
-    # Html2TextTransformer strips HTML/markdown artefacts → clean plain text
-    transformer = Html2TextTransformer()
-    transformed  = transformer.transform_documents(docs)
-
+    input_type = state.get("input_type", "")
     cleaned = []
-    for doc in transformed:
-        text = re.sub(r'[ \t]+', ' ', doc.page_content)    # collapse horizontal ws
-        text = re.sub(r'\n{3,}', '\n\n', text)             # collapse excessive newlines
-        text = text.strip()
-        if len(text) > 80:  # discard very short / noisy fragments
-            cleaned.append(text)
+
+    if input_type == "url":
+        # Web content — strip HTML/markdown artefacts
+        docs = [Document(page_content=t) for t in raw_docs if t.strip()]
+        transformer = Html2TextTransformer()
+        transformed = transformer.transform_documents(docs)
+        for doc in transformed:
+            text = re.sub(r'[ \t]+', ' ', doc.page_content)
+            text = re.sub(r'\n{3,}', '\n\n', text).strip()
+            if len(text) > 80:
+                cleaned.append(text)
+    else:
+        # PDF / DOCX / text / domain — light normalization only
+        for raw in raw_docs:
+            text = re.sub(r'[ \t]+', ' ', raw)
+            text = re.sub(r'\n{3,}', '\n\n', text).strip()
+            if len(text) > 30:
+                cleaned.append(text)
 
     if not cleaned:
         return {"errors": ["After cleaning, no usable text remained."]}
@@ -162,96 +287,224 @@ def clean_node(state: GraphState) -> GraphState:
     return {"cleaned_texts": cleaned}
 
 
-# ── LLM generation node ───────────────────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════════════════════
+# LLM GENERATION NODE  (branches on pipeline_mode: cpt | sft | dpo)
+# ══════════════════════════════════════════════════════════════════════════════
 
 def openai_node(state: GraphState) -> GraphState:
-    """Send cleaned text to GPT-5.4 and get structured Bengali instruction/response pairs."""
+    """
+    Send cleaned text to the LLM and get structured output.
+    Branches on pipeline_mode:
+      - 'cpt' → CPTChunksList  (raw Bengali text chunks)
+      - 'sft' → QAPairsList    (instruction–response pairs)
+      - 'dpo' → DPOTriplesList (prompt, chosen, rejected triples)
+    """
     texts = state.get("cleaned_texts", [])
     if not texts:
         return {"errors": ["No cleaned text available for the LLM."]}
 
-    full_text = "\n\n".join(texts)
+    mode      = state.get("pipeline_mode") or "sft"
+    llm_model = state.get("model") or config.LLM_MODEL
 
-    sys_prompt = state.get("system_prompt") or config.SYSTEM_PROMPT
-    hum_prompt = state.get("human_prompt")  or config.HUMAN_PROMPT_TEMPLATE
-    llm_model  = state.get("model")         or config.LLM_MODEL
-    
-    # Secretly append the context placeholder to whatever the user wrote
-    hum_prompt = hum_prompt.strip() + "\n\nContext:\n{context}"
+    # ── Pick prompts based on mode ────────────────────────────────────────────
+    if mode == "cpt":
+        default_sys = config.CPT_SYSTEM_PROMPT
+        default_hum = config.CPT_HUMAN_PROMPT
+    elif mode == "dpo":
+        default_sys = config.DPO_SYSTEM_PROMPT
+        default_hum = config.DPO_HUMAN_PROMPT
+    else:  # sft (default)
+        default_sys = config.SFT_SYSTEM_PROMPT
+        default_hum = config.SFT_HUMAN_PROMPT
+
+    sys_prompt = state.get("system_prompt") or default_sys
+    hum_prompt = state.get("human_prompt")  or default_hum
+
+    # Ensure {context} placeholder exists in human prompt
+    if "{context}" not in hum_prompt:
+        hum_prompt = hum_prompt.strip() + "\n\nContext:\n{context}"
+
+    # ── Pick output schema based on mode ──────────────────────────────────────
+    if mode == "cpt":
+        output_schema = CPTChunksList
+    elif mode == "dpo":
+        output_schema = DPOTriplesList
+    else:
+        output_schema = QAPairsList
 
     llm    = ChatOpenAI(model=llm_model, reasoning_effort=config.REASONING_EFFORT)
     prompt = ChatPromptTemplate.from_messages([
         ("system", sys_prompt),
         ("human",  hum_prompt),
     ])
-    chain = prompt | llm.with_structured_output(QAPairsList)
+    chain = prompt | llm.with_structured_output(output_schema)
+
+    full_text = "\n\n---\n\n".join(texts)
 
     try:
-        result: QAPairsList = chain.invoke({"context": full_text})
-        pairs = [{"instruction": p.instruction, "response": p.response} for p in result.pairs]
-        return {"qa_pairs": pairs}
+        result = chain.invoke({"context": full_text})
     except Exception as e:
         return {"errors": [f"LLM generation failed: {str(e)}"]}
 
+    # ── Map result to state fields ─────────────────────────────────────────────
+    if mode == "cpt":
+        pairs = [{"instruction": c.text, "response": ""} for c in result.chunks]
+        return {"qa_pairs": pairs}
+    elif mode == "dpo":
+        triples = [
+            {"prompt": t.prompt, "chosen": t.chosen, "rejected": t.rejected}
+            for t in result.triples
+        ]
+        return {"dpo_triples": triples}
+    else:
+        pairs = [{"instruction": p.instruction, "response": p.response} for p in result.pairs]
+        return {"qa_pairs": pairs}
 
-# ── Multi-format export node ──────────────────────────────────────────────────
+
+# ══════════════════════════════════════════════════════════════════════════════
+# EXPORT NODE  (handles CPT / SFT / DPO output formats)
+# ══════════════════════════════════════════════════════════════════════════════
 
 def output_node(state: GraphState) -> GraphState:
     """
-    Write the generated pairs in four formats:
-      1. Base JSONL          — { instruction, response }
-      2. HuggingFace JSONL   — { messages: [{role, content}, ...] }
-      3. Unsloth/Alpaca JSONL — { instruction, input, output }
-      4. Excel (.xlsx)        — one row per pair, two columns
+    Write the generated data in four export formats.
+    Format varies by pipeline_mode:
+
+    CPT mode  → stores raw text chunks
+      - JSONL:    { "text": "..." }
+      - HF:       { "messages": [{"role": "assistant", "content": "..."}] }
+      - Unsloth:  { "instruction": "Generate Bengali text about:", "input": "", "output": "..." }
+      - Excel:    Single 'text' column
+
+    SFT mode  → instruction–response pairs (default / existing behaviour)
+      - JSONL:    { "instruction": "...", "response": "..." }
+      - HF:       { "messages": [user + assistant turns] }
+      - Unsloth:  { "instruction": "...", "input": "", "output": "..." }
+      - Excel:    instruction | response
+
+    DPO mode  → preference triples
+      - JSONL:    { "prompt": "...", "chosen": "...", "rejected": "..." }
+      - HF:       { "prompt": "...", "chosen": [...], "rejected": [...] }
+      - Unsloth:  { "prompt": "...", "chosen": "...", "rejected": "..." }
+      - Excel:    prompt | chosen | rejected
     """
-    pairs = state.get("qa_pairs", [])
-    if not pairs:
-        return {"errors": ["No QA pairs were generated."]}
+    mode    = state.get("pipeline_mode") or "sft"
+    pairs   = state.get("qa_pairs",    [])
+    triples = state.get("dpo_triples", [])
+
+    if mode == "dpo":
+        if not triples:
+            return {"errors": ["No DPO triples were generated."]}
+    else:
+        if not pairs:
+            return {"errors": ["No dataset pairs were generated."]}
 
     os.makedirs(config.OUTPUTS_DIR, exist_ok=True)
     uid = uuid.uuid4().hex[:8]
 
     try:
-        # 1 ── Base JSONL ─────────────────────────────────────────────────
-        base_path = f"{config.OUTPUTS_DIR}/dataset_{uid}.jsonl"
-        with open(base_path, "w", encoding="utf-8") as f:
-            for p in pairs:
-                f.write(json.dumps(p, ensure_ascii=False) + "\n")
+        base_path    = f"{config.OUTPUTS_DIR}/dataset_{mode}_{uid}.jsonl"
+        hf_path      = f"{config.OUTPUTS_DIR}/dataset_{mode}_{uid}_hf.jsonl"
+        unsloth_path = f"{config.OUTPUTS_DIR}/dataset_{mode}_{uid}_unsloth.jsonl"
+        excel_path   = ""
 
-        # 2 ── HuggingFace messages format ─────────────────────────────────
-        hf_path = f"{config.OUTPUTS_DIR}/dataset_{uid}_hf.jsonl"
-        with open(hf_path, "w", encoding="utf-8") as f:
-            for p in pairs:
-                entry = {
-                    "messages": [
-                        {"role": "user",      "content": p["instruction"]},
-                        {"role": "assistant", "content": p["response"]},
-                    ]
-                }
-                f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+        # ── CPT ──────────────────────────────────────────────────────────────
+        if mode == "cpt":
+            # Base JSONL: {text}
+            with open(base_path, "w", encoding="utf-8") as f:
+                for p in pairs:
+                    f.write(json.dumps({"text": p["instruction"]}, ensure_ascii=False) + "\n")
 
-        # 3 ── Unsloth / Alpaca format ──────────────────────────────────────
-        unsloth_path = f"{config.OUTPUTS_DIR}/dataset_{uid}_unsloth.jsonl"
-        with open(unsloth_path, "w", encoding="utf-8") as f:
-            for p in pairs:
-                entry = {
-                    "instruction": p["instruction"],
-                    "input":       "",
-                    "output":      p["response"],
-                }
-                f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+            # HF format: assistant monologue
+            with open(hf_path, "w", encoding="utf-8") as f:
+                for p in pairs:
+                    entry = {"messages": [{"role": "assistant", "content": p["instruction"]}]}
+                    f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
-        # 4 ── Excel (.xlsx) ───────────────────────────────────────────────
-        excel_path = ""
-        if EXCEL_AVAILABLE:
-            excel_path = f"{config.OUTPUTS_DIR}/dataset_{uid}.xlsx"
-            wb = openpyxl.Workbook()
-            ws = wb.active
-            ws.title = "Bengali Dataset"
-            ws.append(["instruction", "response"])
-            for p in pairs:
-                ws.append([p["instruction"], p["response"]])
-            wb.save(excel_path)
+            # Unsloth: instruction="" output=text
+            with open(unsloth_path, "w", encoding="utf-8") as f:
+                for p in pairs:
+                    entry = {"instruction": "নিচের বিষয়ে বাংলায় বিস্তারিত লিখুন:", "input": "", "output": p["instruction"]}
+                    f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+
+            # Excel
+            if EXCEL_AVAILABLE:
+                excel_path = f"{config.OUTPUTS_DIR}/dataset_{mode}_{uid}.xlsx"
+                wb = openpyxl.Workbook()
+                ws = wb.active
+                ws.title = "CPT Dataset"
+                ws.append(["text"])
+                for p in pairs:
+                    ws.append([p["instruction"]])
+                wb.save(excel_path)
+
+        # ── DPO ──────────────────────────────────────────────────────────────
+        elif mode == "dpo":
+            # Base JSONL: {prompt, chosen, rejected}
+            with open(base_path, "w", encoding="utf-8") as f:
+                for t in triples:
+                    f.write(json.dumps(t, ensure_ascii=False) + "\n")
+
+            # HF TRL DPO format
+            with open(hf_path, "w", encoding="utf-8") as f:
+                for t in triples:
+                    entry = {
+                        "prompt":   t["prompt"],
+                        "chosen":   [{"role": "assistant", "content": t["chosen"]}],
+                        "rejected": [{"role": "assistant", "content": t["rejected"]}],
+                    }
+                    f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+
+            # Unsloth DPO format (same as base)
+            with open(unsloth_path, "w", encoding="utf-8") as f:
+                for t in triples:
+                    f.write(json.dumps(t, ensure_ascii=False) + "\n")
+
+            # Excel
+            if EXCEL_AVAILABLE:
+                excel_path = f"{config.OUTPUTS_DIR}/dataset_{mode}_{uid}.xlsx"
+                wb = openpyxl.Workbook()
+                ws = wb.active
+                ws.title = "DPO Dataset"
+                ws.append(["prompt", "chosen", "rejected"])
+                for t in triples:
+                    ws.append([t["prompt"], t["chosen"], t["rejected"]])
+                wb.save(excel_path)
+
+        # ── SFT (default) ─────────────────────────────────────────────────────
+        else:
+            # Base JSONL: {instruction, response}
+            with open(base_path, "w", encoding="utf-8") as f:
+                for p in pairs:
+                    f.write(json.dumps(p, ensure_ascii=False) + "\n")
+
+            # HF messages format
+            with open(hf_path, "w", encoding="utf-8") as f:
+                for p in pairs:
+                    entry = {
+                        "messages": [
+                            {"role": "user",      "content": p["instruction"]},
+                            {"role": "assistant", "content": p["response"]},
+                        ]
+                    }
+                    f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+
+            # Unsloth / Alpaca format
+            with open(unsloth_path, "w", encoding="utf-8") as f:
+                for p in pairs:
+                    entry = {"instruction": p["instruction"], "input": "", "output": p["response"]}
+                    f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+
+            # Excel
+            if EXCEL_AVAILABLE:
+                excel_path = f"{config.OUTPUTS_DIR}/dataset_{mode}_{uid}.xlsx"
+                wb = openpyxl.Workbook()
+                ws = wb.active
+                ws.title = "SFT Dataset"
+                ws.append(["instruction", "response"])
+                for p in pairs:
+                    ws.append([p["instruction"], p["response"]])
+                wb.save(excel_path)
 
         return {
             "output_file":  base_path,
