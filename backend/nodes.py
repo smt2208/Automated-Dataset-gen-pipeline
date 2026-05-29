@@ -402,14 +402,18 @@ def openai_node(state: GraphState) -> GraphState:
             sys_prompt += (
                 "\n\nCROSS-LINGUAL REQUIREMENT: At least 5% of ALL generated items "
                 "MUST have the 'instruction' written in English while the 'output' "
-                "is entirely in Bengali. This teaches the model to understand English "
-                "queries and respond fluently in Bengali."
+                "is entirely in Bengali. IMPORTANT: The English instruction MUST explicitly "
+                "ask the user to respond in Bengali (e.g., '...Please explain in Bengali' or "
+                "'...Answer in Bengali'). This ensures the model learns to switch languages "
+                "only when explicitly asked."
             )
         elif mode == "dpo":
             sys_prompt += (
                 "\n\nCROSS-LINGUAL REQUIREMENT: At least 5% of ALL generated triples "
                 "MUST have the 'prompt' in English, with both 'chosen' and 'rejected' "
-                "responses in Bengali."
+                "responses in Bengali. IMPORTANT: The English prompt MUST explicitly "
+                "ask for the response in Bengali (e.g., '...Please reply in Bengali'). "
+                "This ensures the model learns to switch languages only when explicitly asked."
             )
 
     # ── Pick output schema based on mode ──────────────────────────────────────
