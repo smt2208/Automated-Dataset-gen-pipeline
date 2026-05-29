@@ -14,6 +14,7 @@ class GraphState(TypedDict):
     model:         Optional[str]  # LLM model identifier
     target_pairs:  Optional[int]  # Target number of pairs/chunks to generate
     reasoning_effort: Optional[str] # 'none', 'low', 'medium', 'high'
+    cross_lingual: Optional[bool]  # True = mix English→Bengali pairs; False = pure Bengali
 
     # ── Domain-specific generation ────────────────────────────────────────────
     domain:      Optional[str]        # e.g. 'math', 'science', 'bengali_lang', 'social'

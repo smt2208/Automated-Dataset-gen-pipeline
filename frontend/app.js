@@ -156,16 +156,18 @@ const DEFAULTS = {
     model: 'gpt-5.4-mini',
     pairs: 50,
     reasoning: 'low',
-    system: `You are an expert AI dataset creator building Supervised Fine-Tuning (SFT) data for a Bengali AI Tutor. The tutor must become pedagogically excellent, patient, and culturally aligned with Bengali students (Class 6–12, West Bengal & Bangladesh curricula).\n\nData Quality Standards:\n• Generate instruction-input-output triples following the Alpaca schema.\n• The 'output' field MUST demonstrate expert-level Chain-of-Thought (CoT) reasoning — show step-by-step thinking, not just final answers.\n• Ensure maximum diversity in task types: conceptual explanation, problem solving, step-by-step derivation, multiple-choice with reasoning, summarization, comparison, error correction, translation, creative writing, and real-world application.\n• Use authentic Bengali throughout with culturally appropriate examples (local names, ₹/৳ prices, NCTB/WBBSE references).\n• Vary difficulty from basic (Class 6) to advanced (Class 12 / competitive exam level).\n\nCROSS-LINGUAL REQUIREMENT: At least 5% of ALL generated items MUST have the 'instruction' written in English while the 'output' is entirely in Bengali. This teaches the model to understand English queries and respond fluently in Bengali — a critical real-world capability for Bengali students who often ask questions in English.`,
-    human: `Based on the provided context, generate a diverse set of instruction-input-output triples:\n- instruction: The core task or question (primarily Bengali; at least 5% MUST be in English).\n- input: Additional context for the task (leave blank if instruction is self-sufficient).\n- output: Detailed Bengali response with clear Chain-of-Thought reasoning.\n\nTask Diversity (cover as many as possible):\n• Conceptual explanation ('এটা কী?', 'ব্যাখ্যা করো')\n• Problem solving with step-by-step working\n• Multiple-choice with elimination reasoning\n• Summarization of passages or concepts\n• Compare & contrast between related concepts\n• Error identification & correction\n• Real-world application problems (Bengali context)\n• English→Bengali cross-lingual Q&A (minimum 5%)\n\nFor cross-lingual items, write the instruction in natural English (e.g., 'Explain photosynthesis in Bengali with examples') and provide the full response in Bengali.`,
+    crossLingual: false,
+    system: `You are an expert AI dataset creator building Supervised Fine-Tuning (SFT) data for a Bengali AI Tutor. The tutor must become pedagogically excellent, patient, and culturally aligned with Bengali students (Class 6–12, West Bengal & Bangladesh curricula).\n\nData Quality Standards:\n• Generate instruction-input-output triples following the Alpaca schema.\n• The 'output' field MUST demonstrate expert-level Chain-of-Thought (CoT) reasoning — show step-by-step thinking, not just final answers.\n• Ensure maximum diversity in task types: conceptual explanation, problem solving, step-by-step derivation, multiple-choice with reasoning, summarization, comparison, error correction, translation, creative writing, and real-world application.\n• Use authentic Bengali throughout with culturally appropriate examples (local names, ₹/৳ prices, NCTB/WBBSE references).\n• Vary difficulty from basic (Class 6) to advanced (Class 12 / competitive exam level).\n\nINPUT FIELD REQUIREMENT: For at least 30–40% of the items, the 'input' field MUST contain meaningful supplementary context — a passage to analyze, a table of data, a code snippet, a problem statement, or reference material that the instruction refers to. Do NOT leave the 'input' field empty for every item.`,
+    human: `Based on the provided context, generate a diverse set of instruction-input-output triples:\n- instruction: The core task or question (in Bengali).\n- input: Additional context for the task — a passage, data, or reference material. Fill this for 30–40% of items; leave blank only when the instruction is fully self-contained.\n- output: Detailed Bengali response with clear Chain-of-Thought reasoning.\n\nTask Diversity (cover as many as possible):\n• Conceptual explanation ('এটা কী?', 'ব্যাখ্যা করো')\n• Problem solving with step-by-step working\n• Multiple-choice with elimination reasoning\n• Summarization of passages or concepts\n• Compare & contrast between related concepts\n• Error identification & correction\n• Real-world application problems (Bengali context)`,
   },
   dpo: {
     model: 'gpt-5.4-mini',
     pairs: 50,
     reasoning: 'low',
+    crossLingual: false,
     rejectionStyle: 'mixed',
-    system: `You are an expert in AI alignment for Bengali education. Your task is to generate DPO (Direct Preference Optimization) training triples for a Bengali AI Tutor. Each triple trains the model to prefer high-quality responses over flawed ones.\n\nTriple Structure:\n• prompt: A student question or task (at least 5% MUST be in English for cross-lingual training).\n• chosen: The ideal tutor response — pedagogically excellent, accurate, fluent Bengali, encouraging tone, step-by-step reasoning, culturally appropriate examples.\n• rejected: A plausibly written but clearly inferior response with specific flaws.\n\nRejection Flaws (vary across these categories):\n1. Pedagogical: Skips steps, gives answer without explanation, condescending tone.\n2. Factual: Contains incorrect facts, wrong formulas, misleading information.\n3. Linguistic: Poor Bengali grammar, excessive English mixing, unnatural phrasing.\n4. Structural: Disorganized, no clear reasoning flow, missing key steps, too brief.\n\nCROSS-LINGUAL REQUIREMENT: At least 5% of ALL generated triples MUST have the 'prompt' in English, with both 'chosen' and 'rejected' responses in Bengali.\n\nQuality Standard: The difference between chosen and rejected must be clear and educational — a human annotator should immediately see why 'chosen' is better.`,
-    human: `Generate DPO preference triples for the specified domain:\n- prompt: A student question (primarily Bengali; at least 5% in English)\n- chosen: The ideal Bengali tutor response with clear reasoning and step-by-step explanation\n- rejected: A plausibly written but flawed Bengali response\n\nEnsure diversity across:\n• Question types (conceptual, computational, analytical, creative)\n• Difficulty levels (basic to advanced)\n• Rejection strategies (pedagogical flaws, factual errors, poor Bengali, structural problems)\n• Cross-lingual items (English prompt → Bengali responses, minimum 5%)\n\nFor cross-lingual triples, write the prompt in natural English (e.g., 'Can you explain the water cycle?') and provide both chosen and rejected in Bengali.\n\nThe chosen response should exemplify an ideal Bengali tutor with step-by-step reasoning. The rejected response should be noticeably inferior but not obviously garbage.`,
+    system: `You are an expert in AI alignment for Bengali education. Your task is to generate DPO (Direct Preference Optimization) training triples for a Bengali AI Tutor. Each triple trains the model to prefer high-quality responses over flawed ones.\n\nTriple Structure:\n• prompt: A student question or task (in Bengali).\n• chosen: The ideal tutor response — pedagogically excellent, accurate, fluent Bengali, encouraging tone, step-by-step reasoning, culturally appropriate examples.\n• rejected: A plausibly written but clearly inferior response with specific flaws.\n\nRejection Flaws (vary across these categories):\n1. Pedagogical: Skips steps, gives answer without explanation, condescending tone.\n2. Factual: Contains incorrect facts, wrong formulas, misleading information.\n3. Linguistic: Poor Bengali grammar, excessive English mixing, unnatural phrasing.\n4. Structural: Disorganized, no clear reasoning flow, missing key steps, too brief.\n\nQuality Standard: The difference between chosen and rejected must be clear and educational — a human annotator should immediately see why 'chosen' is better.`,
+    human: `Generate DPO preference triples for the specified domain:\n- prompt: A student question (in Bengali)\n- chosen: The ideal Bengali tutor response with clear reasoning and step-by-step explanation\n- rejected: A plausibly written but flawed Bengali response\n\nEnsure diversity across:\n• Question types (conceptual, computational, analytical, creative)\n• Difficulty levels (basic to advanced)\n• Rejection strategies (pedagogical flaws, factual errors, poor Bengali, structural problems)\n\nThe chosen response should exemplify an ideal Bengali tutor with step-by-step reasoning. The rejected response should be noticeably inferior but not obviously garbage.`,
   },
 };
 
@@ -397,6 +399,7 @@ function connectAndRun(inputType, inputSource, settings, section, extra = {}) {
       model:         settings.model,
       target_pairs:  settings.pairs,
       reasoning_effort: settings.reasoning,
+      cross_lingual: settings.crossLingual || false,
       pipeline_mode: section,
       ...extra
     }));
@@ -652,6 +655,11 @@ function openSectionSettings(section) {
   _setVal(`${section}-system-prompt`, s.system);
   _setVal(`${section}-human-prompt`, s.human);
   if (section === 'dpo') _setVal('dpo-rejection-style', s.rejectionStyle || 'mixed');
+  // Cross-lingual toggle (SFT and DPO only)
+  if (section === 'sft' || section === 'dpo') {
+    const toggle = document.getElementById(`${section}-cross-lingual`);
+    if (toggle) toggle.checked = s.crossLingual || false;
+  }
 
   document.getElementById(`modal-${section}`).classList.add('active');
 }
@@ -678,6 +686,12 @@ function saveSectionSettings(section) {
   sectionSettings[section].system    = system || DEFAULTS[section].system;
   sectionSettings[section].human     = human  || DEFAULTS[section].human;
 
+  // Cross-lingual toggle (SFT and DPO only)
+  if (section === 'sft' || section === 'dpo') {
+    const toggle = document.getElementById(`${section}-cross-lingual`);
+    sectionSettings[section].crossLingual = toggle ? toggle.checked : false;
+  }
+
   if (section === 'dpo') {
     sectionSettings[section].rejectionStyle =
       document.getElementById('dpo-rejection-style').value || 'mixed';
@@ -695,6 +709,11 @@ function resetSectionDefaults(section) {
   _setVal(`${section}-system-prompt`, d.system);
   _setVal(`${section}-human-prompt`, d.human);
   if (section === 'dpo') _setVal('dpo-rejection-style', 'mixed');
+  // Reset cross-lingual toggle
+  if (section === 'sft' || section === 'dpo') {
+    const toggle = document.getElementById(`${section}-cross-lingual`);
+    if (toggle) toggle.checked = d.crossLingual || false;
+  }
   showToast(`${section.toUpperCase()} settings reset to defaults.`, 'info');
 }
 

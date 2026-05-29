@@ -840,6 +840,14 @@
           <option value="high">High</option>
         </select>
         <p class="hint reasoning-hint">High reasoning will consume more time and tokens.</p>
+        <div class="toggle-row">
+          <label for="sft-cross-lingual" class="toggle-label">Cross-Lingual Pairs</label>
+          <label class="toggle-switch">
+            <input type="checkbox" id="sft-cross-lingual" />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <p class="hint">When enabled, ~5% of items will have English instructions with Bengali outputs.</p>
         <label for="sft-system-prompt">System Prompt (SFT Generation)</label>
         <textarea id="sft-system-prompt" class="modal-textarea"></textarea>
         <label for="sft-human-prompt">Generation Instructions</label>
@@ -877,6 +885,14 @@
           <option value="high">High</option>
         </select>
         <p class="hint reasoning-hint">High reasoning will consume more time and tokens.</p>
+        <div class="toggle-row">
+          <label for="dpo-cross-lingual" class="toggle-label">Cross-Lingual Pairs</label>
+          <label class="toggle-switch">
+            <input type="checkbox" id="dpo-cross-lingual" />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <p class="hint">When enabled, ~5% of triples will have English prompts with Bengali responses.</p>
         <label for="dpo-rejection-style">Rejection Strategy</label>
         <select id="dpo-rejection-style" class="modal-select">
           <option value="pedagogical">Pedagogical (bad teaching style)</option>

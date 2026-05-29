@@ -41,6 +41,7 @@ def _initial_state(
     pipeline_mode: str  | None = "sft",
     domain:        str  | None = None,
     subdomains:    list | None = None,
+    cross_lingual: bool | None = None,
 ) -> GraphState:
     # Cap pairs to 100
     tp = target_pairs or config.DEFAULT_PAIRS.get(pipeline_mode or "sft", 100)
@@ -54,6 +55,7 @@ def _initial_state(
         "model":         model,
         "target_pairs":  tp,
         "reasoning_effort": reasoning,
+        "cross_lingual": cross_lingual if cross_lingual is not None else False,
         "domain":        domain,
         "subdomains":    subdomains or [],
         "raw_documents": [],
@@ -159,6 +161,7 @@ async def ws_process(websocket: WebSocket):
         custom_model  = data.get("model")
         target_pairs  = data.get("target_pairs")
         reasoning     = data.get("reasoning_effort")
+        cross_lingual = data.get("cross_lingual", False)
         domain        = data.get("domain")
         subdomains    = data.get("subdomains") or []
 
@@ -203,6 +206,7 @@ async def ws_process(websocket: WebSocket):
             pipeline_mode = pipeline_mode,
             domain        = domain,
             subdomains    = subdomains,
+            cross_lingual = bool(cross_lingual),
         )
 
         accumulated: dict = {}

@@ -48,8 +48,8 @@ _MAX_CONTEXT_CHARS = 50000
 
 class QAPair(BaseModel):
     """SFT instruction–input–output pair."""
-    instruction: str = Field(description="The core task or question — primarily in Bengali, but can be in English for cross-lingual items.")
-    input:       str = Field(description="Additional context for the task (can be empty/blank if the instruction is self-sufficient).")
+    instruction: str = Field(description="The core task or question in Bengali.")
+    input:       str = Field(description="Supplementary context — a passage, data table, problem statement, or reference material. Fill this for 30-40% of items; leave as empty string when instruction is self-contained.")
     output:      str = Field(description="The detailed, accurate Bengali response with step-by-step Chain-of-Thought reasoning.")
 
 class QAPairsList(BaseModel):
@@ -66,7 +66,7 @@ class CPTChunksList(BaseModel):
 
 class DPOTriple(BaseModel):
     """DPO preference triple."""
-    prompt:   str = Field(description="A student question or prompt — primarily in Bengali, but can be in English for cross-lingual items.")
+    prompt:   str = Field(description="A student question or prompt in Bengali.")
     chosen:   str = Field(description="The preferred, pedagogically excellent Bengali response with clear step-by-step reasoning.")
     rejected: str = Field(description="The inferior, flawed Bengali response with specific pedagogical, factual, or linguistic problems.")
 
@@ -394,6 +394,23 @@ def openai_node(state: GraphState) -> GraphState:
 
     target_pairs = state.get("target_pairs") or 50
     sys_prompt += f"\n\nIMPORTANT INSTRUCTION: You must generate EXACTLY {target_pairs} items."
+
+    # ── Dynamic cross-lingual injection ───────────────────────────────────────
+    cross_lingual = state.get("cross_lingual", False)
+    if cross_lingual and mode in ("sft", "dpo"):
+        if mode == "sft":
+            sys_prompt += (
+                "\n\nCROSS-LINGUAL REQUIREMENT: At least 5% of ALL generated items "
+                "MUST have the 'instruction' written in English while the 'output' "
+                "is entirely in Bengali. This teaches the model to understand English "
+                "queries and respond fluently in Bengali."
+            )
+        elif mode == "dpo":
+            sys_prompt += (
+                "\n\nCROSS-LINGUAL REQUIREMENT: At least 5% of ALL generated triples "
+                "MUST have the 'prompt' in English, with both 'chosen' and 'rejected' "
+                "responses in Bengali."
+            )
 
     # ── Pick output schema based on mode ──────────────────────────────────────
     if mode == "cpt":
