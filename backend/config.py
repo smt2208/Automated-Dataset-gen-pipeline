@@ -38,7 +38,7 @@ class Config:
     REASONING_EFFORT = "low"
 
     # ── Default target pairs per mode ─────────────────────────────────────────
-    DEFAULT_PAIRS = {"cpt": 50, "sft": 50, "dpo": 50}
+    DEFAULT_PAIRS = {"cpt": 10, "sft": 20, "dpo": 20}
 
     # ── SFT Default Prompts ───────────────────────────────────────────────────
     SFT_SYSTEM_PROMPT = (

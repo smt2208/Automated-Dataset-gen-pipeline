@@ -43,9 +43,11 @@ def _initial_state(
     subdomains:    list | None = None,
     cross_lingual: bool | None = None,
 ) -> GraphState:
-    # Cap pairs to 100
-    tp = target_pairs or config.DEFAULT_PAIRS.get(pipeline_mode or "sft", 100)
-    tp = min(tp, 100)
+    # Cap target pairs/chunks based on mode: CPT max 50, SFT/DPO max 100
+    pm = pipeline_mode or "sft"
+    max_limit = 50 if pm == "cpt" else 100
+    tp = target_pairs or config.DEFAULT_PAIRS.get(pm, max_limit)
+    tp = min(tp, max_limit)
     return {
         "input_type":    input_type,
         "input_source":  input_source,

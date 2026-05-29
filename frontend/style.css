@@ -1257,10 +1257,15 @@ input[type="number"]:focus,
   position: absolute;
   cursor: pointer;
   inset: 0;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 26px;
-  transition: background .25s ease, border-color .25s ease;
+  transition: background .25s cubic-bezier(0.4, 0, 0.2, 1), border-color .25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow .25s ease;
+}
+
+.toggle-slider:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.28);
 }
 
 .toggle-slider::before {
@@ -1270,14 +1275,19 @@ input[type="number"]:focus,
   height: 20px;
   left: 2px;
   bottom: 2px;
-  background: var(--text-muted);
+  background: #cbd5e1;
   border-radius: 50%;
-  transition: transform .25s ease, background .25s ease;
+  transition: transform .25s cubic-bezier(0.4, 0, 0.2, 1), background .25s ease;
+}
+
+.toggle-slider:hover::before {
+  background: #f1f5f9;
 }
 
 .toggle-switch input:checked + .toggle-slider {
   background: var(--accent);
   border-color: var(--accent);
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.35);
 }
 
 .toggle-switch input:checked + .toggle-slider::before {
@@ -1286,7 +1296,7 @@ input[type="number"]:focus,
 }
 
 .toggle-switch input:focus-visible + .toggle-slider {
-  box-shadow: 0 0 0 3px rgba(108,99,255,.25);
+  box-shadow: 0 0 0 3px rgba(108,99,255,.35);
 }
 
 .modal-footer {

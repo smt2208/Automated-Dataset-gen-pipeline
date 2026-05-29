@@ -147,14 +147,14 @@ const DOMAIN_DATA = {
 const DEFAULTS = {
   cpt: {
     model: 'gpt-5.4-mini',
-    pairs: 50,
+    pairs: 10,
     reasoning: 'low',
     system: `You are an expert Bengali language corpus architect. Your task is to generate high-quality, natural Bengali (বাংলা) raw text passages for Continued Pre-Training (CPT) of a language model that will serve as a Bengali AI tutor.\n\nQuality Standards:\n• Write entirely in authentic, fluent Bengali — avoid unnecessary English mixing unless it is natural in the educational context (e.g., technical terms like 'DNA', 'algorithm').\n• Content must be factually accurate, well-structured, and pedagogically sound.\n• Use diverse writing styles: expository, narrative, dialogic (teacher-student conversation), and analytical.\n• Target Class 6–12 students across West Bengal and Bangladesh curricula.\n• Include culturally grounded examples: local names, prices in ₹/৳, Bengali festivals, geography, and historical references.\n• Vary sentence length and complexity — mix simple explanations with advanced academic prose.`,
     human: `Generate rich, diverse Bengali raw text passages based on the provided context. Each passage should feel like it comes from an authentic Bengali educational resource — a textbook chapter, encyclopedia entry, well-written magazine article, or a teacher's detailed explanation.\n\nRequirements:\n1. Cover the topic comprehensively with depth and accuracy.\n2. Use varied registers: some passages formal/academic, others conversational/explanatory.\n3. Include specific examples, numbers, and facts grounded in Bengali/South Asian context.\n4. Naturally integrate subject-specific terminology (transliterated English terms are acceptable where standard in Bengali education).\n5. Output only Bengali text — no meta-commentary, headers, or labels.`,
   },
   sft: {
     model: 'gpt-5.4-mini',
-    pairs: 50,
+    pairs: 20,
     reasoning: 'low',
     crossLingual: false,
     system: `You are an expert AI dataset creator building Supervised Fine-Tuning (SFT) data for a Bengali AI Tutor. The tutor must become pedagogically excellent, patient, and culturally aligned with Bengali students (Class 6–12, West Bengal & Bangladesh curricula).\n\nData Quality Standards:\n• Generate instruction-input-output triples following the Alpaca schema.\n• The 'output' field MUST demonstrate expert-level Chain-of-Thought (CoT) reasoning — show step-by-step thinking, not just final answers.\n• Ensure maximum diversity in task types: conceptual explanation, problem solving, step-by-step derivation, multiple-choice with reasoning, summarization, comparison, error correction, translation, creative writing, and real-world application.\n• Use authentic Bengali throughout with culturally appropriate examples (local names, ₹/৳ prices, NCTB/WBBSE references).\n• Vary difficulty from basic (Class 6) to advanced (Class 12 / competitive exam level).\n\nINPUT FIELD REQUIREMENT: For at least 30–40% of the items, the 'input' field MUST contain meaningful supplementary context — a passage to analyze, a table of data, a code snippet, a problem statement, or reference material that the instruction refers to. Do NOT leave the 'input' field empty for every item.`,
@@ -162,7 +162,7 @@ const DEFAULTS = {
   },
   dpo: {
     model: 'gpt-5.4-mini',
-    pairs: 50,
+    pairs: 20,
     reasoning: 'low',
     crossLingual: false,
     rejectionStyle: 'mixed',
@@ -675,9 +675,10 @@ function saveSectionSettings(section) {
   const system = document.getElementById(`${section}-system-prompt`).value.trim();
   const human  = document.getElementById(`${section}-human-prompt`).value.trim();
 
-  // Cap target pairs to maximum 100 per generation
+  // Cap target pairs/chunks per generation based on section limits (CPT: 50, SFT/DPO: 100)
+  const maxLimit = section === 'cpt' ? 50 : 100;
   if (isNaN(pairs)) pairs = DEFAULTS[section].pairs;
-  if (pairs > 100) pairs = 100;
+  if (pairs > maxLimit) pairs = maxLimit;
   if (pairs < 1) pairs = 1;
 
   sectionSettings[section].model     = model  || DEFAULTS[section].model;

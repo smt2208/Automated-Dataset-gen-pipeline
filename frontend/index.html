@@ -792,9 +792,9 @@
           <option value="gpt-5.4">gpt-5.4</option>
           <option value="gpt-5.4-nano">gpt-5.4-nano</option>
         </select>
-        <label for="cpt-pairs-count">Target Pairs / Chunks (Max 100)</label>
-        <input type="number" id="cpt-pairs-count" class="modal-input" value="50" min="10" max="100" step="10" />
-        <p class="hint">CPT data is raw text — maximum 100 chunks per generation</p>
+        <label for="cpt-pairs-count">Target Chunks (Max 50)</label>
+        <input type="number" id="cpt-pairs-count" class="modal-input" value="10" min="5" max="50" step="5" />
+        <p class="hint">CPT data is raw text — maximum 50 chunks per generation</p>
         <label for="cpt-reasoning">Reasoning Effort</label>
         <select id="cpt-reasoning" class="modal-select">
           <option value="none">None</option>
@@ -830,7 +830,7 @@
           <option value="gpt-5.4-nano">gpt-5.4-nano</option>
         </select>
         <label for="sft-pairs-count">Target Instruction Pairs (Max 100)</label>
-        <input type="number" id="sft-pairs-count" class="modal-input" value="50" min="10" max="100" step="10" />
+        <input type="number" id="sft-pairs-count" class="modal-input" value="20" min="10" max="100" step="10" />
         <p class="hint">Maximum 100 pairs per generation</p>
         <label for="sft-reasoning">Reasoning Effort</label>
         <select id="sft-reasoning" class="modal-select">
@@ -875,7 +875,7 @@
           <option value="gpt-5.4-nano">gpt-5.4-nano</option>
         </select>
         <label for="dpo-pairs-count">Target Preference Triples (Max 100)</label>
-        <input type="number" id="dpo-pairs-count" class="modal-input" value="50" min="10" max="100" step="10" />
+        <input type="number" id="dpo-pairs-count" class="modal-input" value="20" min="10" max="100" step="10" />
         <p class="hint">Maximum 100 triples per generation</p>
         <label for="dpo-reasoning">Reasoning Effort</label>
         <select id="dpo-reasoning" class="modal-select">
